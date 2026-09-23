@@ -280,13 +280,13 @@ This is the first migration in the repo. Locally and in CI it applies automatica
 
 #### Automated
 
-- [ ] 1.1 Migration applies on a clean DB: `npx supabase db reset`
-- [ ] 1.2 Lint passes: `npm run lint`
-- [ ] 1.3 Type check passes: `npx astro check`
+- [x] 1.1 Migration applies on a clean DB: `npx supabase db reset`
+- [x] 1.2 Lint passes: `npm run lint`
+- [x] 1.3 Type check passes: `npx astro check`
 
 #### Manual
 
-- [ ] 1.4 In Supabase Studio (local), `public.children` shows RLS enabled with exactly two policies (select, insert)
+- [x] 1.4 In Supabase Studio (local), `public.children` shows RLS enabled with exactly two policies (select, insert)
 
 ### Phase 2: Children page and flow
 

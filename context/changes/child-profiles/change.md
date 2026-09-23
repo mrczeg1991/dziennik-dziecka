@@ -1,9 +1,9 @@
 ---
 change_id: child-profiles
 title: Rodzic dodaje profil dziecka i widzi listę swoich dzieci
-status: planned
+status: implementing
 created: 2026-09-23
-updated: 2026-09-23
+updated: 2026-09-24
 archived_at: null
 ---
 
