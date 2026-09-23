@@ -1,25 +1,69 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AddChildForm from "@/components/children/AddChildForm";
+import { createClient } from "@/lib/supabase";
+import { listChildren, type Child } from "@/lib/children";
 
 const { user } = Astro.locals;
+const error = Astro.url.searchParams.get("error");
+
+// A failed query must never be shown as "no children".
+let children: Child[] = [];
+let listFailed = false;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (supabase) {
+  try {
+    children = await listChildren(supabase);
+  } catch {
+    listFailed = true;
+  }
+} else {
+  listFailed = true;
+}
+
+// "YYYY-MM-DD" -> "dd.mm.rrrr" without going through Date (no time-zone shift).
+function formatBirthDate(value: string) {
+  const [year, month, day] = value.split("-");
+  return `${day}.${month}.${year}`;
+}
 ---
 
-<Layout title="Dashboard">
+<Layout title="Moje dzieci">
   <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
-      <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-        Dashboard
+    <div class="w-full max-w-md rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+      <h1 class="mb-2 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-3xl font-bold text-transparent">
+        Moje dzieci
       </h1>
-      <p class="text-blue-100/80">
-        Welcome, <span class="font-semibold text-white">{user?.email}</span>
-      </p>
-      <p class="mt-2 text-sm text-blue-100/50">This page is only for authenticated users.</p>
-      <form method="POST" action="/api/auth/signout" class="mt-6">
+      <p class="mb-6 text-center text-sm text-blue-100/60">{user?.email}</p>
+
+      {listFailed ? (
+        <p class="mb-6 rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+          Nie udało się wczytać listy dzieci. Odśwież stronę.
+        </p>
+      ) : children.length === 0 ? (
+        <p class="mb-6 text-center text-blue-100/70">Nie dodano jeszcze żadnego dziecka.</p>
+      ) : (
+        <ul class="mb-6 space-y-2">
+          {children.map((child) => (
+            <li class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+              <span class="font-semibold">{child.name}</span>
+              {child.birth_date && (
+                <span class="text-sm text-blue-100/60">ur. {formatBirthDate(child.birth_date)}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 class="mb-3 text-lg font-semibold text-blue-100">Dodaj dziecko</h2>
+      <AddChildForm serverError={error} client:load />
+
+      <form method="POST" action="/api/auth/signout" class="mt-6 text-center">
         <button
           type="submit"
           class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
         >
-          Sign out
+          Wyloguj
         </button>
       </form>
     </div>

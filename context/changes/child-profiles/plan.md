@@ -280,28 +280,28 @@ This is the first migration in the repo. Locally and in CI it applies automatica
 
 #### Automated
 
-- [x] 1.1 Migration applies on a clean DB: `npx supabase db reset`
-- [x] 1.2 Lint passes: `npm run lint`
-- [x] 1.3 Type check passes: `npx astro check`
+- [x] 1.1 Migration applies on a clean DB: `npx supabase db reset` — a36287c
+- [x] 1.2 Lint passes: `npm run lint` — a36287c
+- [x] 1.3 Type check passes: `npx astro check` — a36287c
 
 #### Manual
 
-- [x] 1.4 In Supabase Studio (local), `public.children` shows RLS enabled with exactly two policies (select, insert)
+- [x] 1.4 In Supabase Studio (local), `public.children` shows RLS enabled with exactly two policies (select, insert) — a36287c
 
 ### Phase 2: Children page and flow
 
 #### Automated
 
-- [ ] 2.1 Lint passes: `npm run lint`
-- [ ] 2.2 Type check passes: `npx astro check`
-- [ ] 2.3 Build passes: `npm run build`
+- [x] 2.1 Lint passes: `npm run lint`
+- [x] 2.2 Type check passes: `npx astro check`
+- [x] 2.3 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 2.4 After sign-in, the browser lands on `/dashboard` showing "Moje dzieci" and the empty state
-- [ ] 2.5 Adding "Ola" with no birth date, then "Jaś" with a birth date, shows both in that order; the date renders as `dd.mm.rrrr`
-- [ ] 2.6 Submitting an empty name shows a Polish client-side error; bypassing it (e.g. devtools) shows the Polish server error banner
-- [ ] 2.7 Visiting `/` while logged in redirects to `/dashboard`; visiting `/` while logged out shows the Welcome page
+- [x] 2.4 After sign-in, the browser lands on `/dashboard` showing "Moje dzieci" and the empty state
+- [x] 2.5 Adding "Ola" with no birth date, then "Jaś" with a birth date, shows both in that order; the date renders as `dd.mm.rrrr`
+- [x] 2.6 Submitting an empty name shows a Polish client-side error; bypassing it (e.g. devtools) shows the Polish server error banner
+- [x] 2.7 Visiting `/` while logged in redirects to `/dashboard`; visiting `/` while logged out shows the Welcome page
 
 ### Phase 3: Verification and deploy
 
