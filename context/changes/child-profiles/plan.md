@@ -307,11 +307,11 @@ This is the first migration in the repo. Locally and in CI it applies automatica
 
 #### Automated
 
-- [ ] 3.1 Smoke passes locally against `npm run preview` with local Supabase: `BASE_URL=http://localhost:4321 npm run smoke`
-- [ ] 3.2 Lint passes: `npm run lint`
+- [x] 3.1 Smoke passes locally against `npm run preview` with local Supabase: `BASE_URL=http://localhost:4321 npm run smoke`
+- [x] 3.2 Lint passes: `npm run lint`
 - [ ] 3.3 CI `ci` and `smoke` jobs are green on the PR
 
 #### Manual
 
-- [ ] 3.4 Migration pushed to the hosted Supabase project and the deployed app shows "Moje dzieci" after sign-in
-- [ ] 3.5 With two real accounts on production, each sees only its own children
+- [x] 3.4 Migration pushed to the hosted Supabase project and the deployed app shows "Moje dzieci" after sign-in
+- [x] 3.5 With two real accounts on production, each sees only its own children

@@ -36,7 +36,7 @@ W `wrangler.jsonc` zmień `name` z `"10x-astro-starter"` na `"dziennik-dziecka"`
 1. Utwórz nowy projekt na [supabase.com](https://supabase.com) (organizacja, region, hasło do bazy).
 2. **Authentication → Email → Confirm email → wyłącz.** Spójne z lokalnym dev (`supabase/config.toml` ma `enable_confirmations = false`), użytkownik może się zalogować od razu po rejestracji.
 3. Zanotuj z **Settings → API**: `Project URL` i klucz `anon` `public`.
-4. Site URL na razie ustaw tymczasowo (np. `http://localhost:4321`) — wrócimy do tego w kroku 8, gdy poznamy faktyczny adres produkcyjny.
+4. Site URL na razie ustaw tymczasowo (np. `http://localhost:4321`) — wrócimy do tego w kroku 9, gdy poznamy faktyczny adres produkcyjny.
 
 ### 3. Zaloguj Wranglera
 
@@ -64,7 +64,23 @@ npx astro check
 
 Te same bramki co w CI (`.github/workflows/ci.yml`) — łapią błędy przed wysłaniem na produkcję.
 
-### 6. Build i deploy
+### 6. Wypchnij migracje bazy
+
+Raz, żeby powiązać lokalne repo z projektem Supabase w chmurze (`<ref>` to identyfikator projektu z URL-a dashboardu / **Settings → General**):
+
+```bash
+npx supabase link --project-ref <ref>
+```
+
+Potem przy każdym wdrożeniu, które niesie nowe migracje:
+
+```bash
+npx supabase db push
+```
+
+Nakłada na produkcyjną bazę migracje z `supabase/migrations/`, których tam jeszcze nie ma (np. tabelę `children` z RLS). **Każda przyszła migracja wymaga tego kroku przed deployem kodu, który od niej zależy** — inaczej nowy kod trafi na bazę bez tabeli i np. `/dashboard` zwróci błąd.
+
+### 7. Build i deploy
 
 ```bash
 npm run build
@@ -73,15 +89,15 @@ npx wrangler deploy
 
 Zanotuj adres URL z outputu `wrangler deploy` (postać `https://dziennik-dziecka.<subdomain>.workers.dev`).
 
-### 7. Weryfikacja
+### 8. Weryfikacja
 
 - Wejdź na zwrócony URL — strona główna powinna się załadować.
 - Ręcznie przejdź: `/auth/signup` → rejestracja → `/dashboard` (powinno przepuścić, bo email confirm jest wyłączony) → `/auth/signout`.
 - W osobnym terminalu podczas pierwszego realnego requestu: `npx wrangler tail` (live logi, bezpieczne do uruchomienia).
 
-### 8. Zamknij pętlę Supabase Site URL
+### 9. Zamknij pętlę Supabase Site URL
 
-Wróć do Supabase dashboard → Authentication → URL Configuration i ustaw Site URL oraz Redirect URLs na faktyczny adres z kroku 6.
+Wróć do Supabase dashboard → Authentication → URL Configuration i ustaw Site URL oraz Redirect URLs na faktyczny adres z kroku 7.
 
 ## Sekrety — ściąga
 
@@ -108,9 +124,6 @@ Cofa kod/assets Workera w sekundy. **Nie cofa** migracji schematu Supabase — j
 
 ## Następne kroki
 
-Kroki 1-7 wykonane 2026-09-19. Worker działa pod `https://dziennik-dziecka.mrczeg.workers.dev` (homepage i `/auth/signup` odpowiadają 200, `/dashboard` przekierowuje 302 dla niezalogowanego użytkownika — zgodnie z oczekiwaniami).
+Kroki 1-5 oraz 7-8 wykonane 2026-09-19, kroki 6 (migracje, dodany później razem z tabelą `children`) i 9 wykonane 2026-09-24. Worker działa pod `https://dziennik-dziecka.mrczeg.workers.dev` (homepage i `/auth/signup` odpowiadają 200, `/dashboard` przekierowuje 302 dla niezalogowanego użytkownika — zgodnie z oczekiwaniami).
 
-Zostało do zrobienia:
-
-- **Krok 8** — w Supabase dashboard ustawić Site URL i Redirect URLs na `https://dziennik-dziecka.mrczeg.workers.dev` (jeszcze nie wykonane).
-- Ręczne przejście flow signup → dashboard → signout na produkcyjnym URL-u (nie zostało wykonane automatycznie — tworzy realne konto w Supabase Auth, decyzja należy do Ciebie).
+Brak otwartych kroków. Flow signup → `/dashboard` („Moje dzieci”) → signout sprawdzony na produkcji 2026-09-24, w tym izolacja danych między dwoma kontami.
