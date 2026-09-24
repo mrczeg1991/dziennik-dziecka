@@ -41,7 +41,7 @@ Rodzic dwójki dzieci nie pamięta drobnych faktów o nich — pomiarów, objaw�
 
 | ID   | Change ID              | Outcome (user can …)                                                                 | Prerequisites | PRD refs                     | Status   | Issue |
 | ---- | ---------------------- | ------------------------------------------------------------------------------------ | ------------- | ---------------------------- | -------- | ----- |
-| S-01 | child-profiles         | rodzic po założeniu konta i zalogowaniu dodaje profil dziecka i widzi listę swoich dzieci | —             | FR-001, FR-002, FR-003       | in-progress | #1 |
+| S-01 | child-profiles         | rodzic po założeniu konta i zalogowaniu dodaje profil dziecka i widzi listę swoich dzieci | —             | FR-001, FR-002, FR-003       | done     | #1    |
 | S-02 | first-child-note       | rodzic zapisuje dowolną notatkę o dziecku i widzi ją na liście notatek tego dziecka  | S-01          | US-01, FR-004, FR-005        | proposed | #2    |
 
 ## Baseline
@@ -73,7 +73,7 @@ Brak. Logowanie i frontend są obecne, a brakująca warstwa danych jest wprowadz
 - **Unknowns:**
   - Jakie pola ma profil dziecka poza imieniem (np. data urodzenia)? PRD tego nie precyzuje. — Owner: user. Block: no.
 - **Risk:** Pierwsze wprowadzenie danych aplikacji — tu powstaje zasada „dane widzi tylko właściciel konta”, na której opiera się S-02; błąd w izolacji danych między kontami przeniesie się na notatki. FR-001/FR-002 już działają (Baseline) — ten kawałek tylko prowadzi zalogowanego rodzica do listy dzieci i nie przebudowuje logowania.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: Rodzic zapisuje notatkę o dziecku i widzi ją na liście
 
@@ -116,3 +116,5 @@ Brak. Logowanie i frontend są obecne, a brakująca warstwa danych jest wprowadz
 ## Milestone History
 
 ## Done
+
+- **S-01: rodzic po założeniu konta i zalogowaniu dodaje profil dziecka i widzi listę swoich dzieci (zamiast pustego dashboardu ze startera).** — Archived 2026-09-24 → `context/archive/2026-09-23-child-profiles/`. Lesson: —.
