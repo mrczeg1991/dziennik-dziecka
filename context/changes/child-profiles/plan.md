@@ -292,16 +292,16 @@ This is the first migration in the repo. Locally and in CI it applies automatica
 
 #### Automated
 
-- [x] 2.1 Lint passes: `npm run lint`
-- [x] 2.2 Type check passes: `npx astro check`
-- [x] 2.3 Build passes: `npm run build`
+- [x] 2.1 Lint passes: `npm run lint` — 04f0c4e
+- [x] 2.2 Type check passes: `npx astro check` — 04f0c4e
+- [x] 2.3 Build passes: `npm run build` — 04f0c4e
 
 #### Manual
 
-- [x] 2.4 After sign-in, the browser lands on `/dashboard` showing "Moje dzieci" and the empty state
-- [x] 2.5 Adding "Ola" with no birth date, then "Jaś" with a birth date, shows both in that order; the date renders as `dd.mm.rrrr`
-- [x] 2.6 Submitting an empty name shows a Polish client-side error; bypassing it (e.g. devtools) shows the Polish server error banner
-- [x] 2.7 Visiting `/` while logged in redirects to `/dashboard`; visiting `/` while logged out shows the Welcome page
+- [x] 2.4 After sign-in, the browser lands on `/dashboard` showing "Moje dzieci" and the empty state — 04f0c4e
+- [x] 2.5 Adding "Ola" with no birth date, then "Jaś" with a birth date, shows both in that order; the date renders as `dd.mm.rrrr` — 04f0c4e
+- [x] 2.6 Submitting an empty name shows a Polish client-side error; bypassing it (e.g. devtools) shows the Polish server error banner — 04f0c4e
+- [x] 2.7 Visiting `/` while logged in redirects to `/dashboard`; visiting `/` while logged out shows the Welcome page — 04f0c4e
 
 ### Phase 3: Verification and deploy
 
