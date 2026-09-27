@@ -34,6 +34,25 @@ export async function listChildren(supabase: SupabaseServerClient): Promise<Chil
 }
 
 /**
+ * Resolves one child by id. Ownership is enforced by RLS, so a child belonging to
+ * another account is indistinguishable from one that does not exist: both return
+ * `null`. Throws on a query failure.
+ */
+export async function getChild(supabase: SupabaseServerClient, childId: string): Promise<Child | null> {
+  const { data, error } = await supabase
+    .from("children")
+    .select("id, name, birth_date, created_at")
+    .eq("id", childId)
+    .maybeSingle()
+    .overrideTypes<Child, { merge: false }>();
+
+  if (error) {
+    throw error;
+  }
+  return data;
+}
+
+/**
  * Inserts one child owned by `userId`. Returns the query error, if any.
  */
 export async function createChild(

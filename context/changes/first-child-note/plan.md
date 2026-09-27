@@ -433,14 +433,14 @@ Two forward-looking notes:
 
 #### Automated
 
-- [ ] 1.1 Migration applies from scratch: `npx supabase db reset`
-- [ ] 1.2 Type checking passes: `npx astro check`
-- [ ] 1.3 Linting passes: `npm run lint`
+- [x] 1.1 Migration applies from scratch: `npx supabase db reset`
+- [x] 1.2 Type checking passes: `npx astro check`
+- [x] 1.3 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 1.4 In local Studio as one account, inserting a note whose `child_id` belongs to a second account is rejected by the policy
-- [ ] 1.5 `delete from public.notes` as an authenticated user affects no rows, because no `delete` policy exists
+- [x] 1.4 In local Studio as one account, inserting a note whose `child_id` belongs to a second account is rejected by the policy
+- [x] 1.5 `delete from public.notes` as an authenticated user affects no rows, because no `delete` policy exists
 
 ### Phase 2: Per-child page and note flow
 
