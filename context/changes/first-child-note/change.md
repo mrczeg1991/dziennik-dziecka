@@ -1,9 +1,9 @@
 ---
 change_id: first-child-note
 title: First child note
-status: new
+status: planned
 created: 2026-09-26
-updated: 2026-09-26
+updated: 2026-09-27
 archived_at: null
 ---
 
