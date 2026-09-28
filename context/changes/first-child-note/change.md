@@ -3,7 +3,7 @@ change_id: first-child-note
 title: First child note
 status: implementing
 created: 2026-09-26
-updated: 2026-09-27
+updated: 2026-09-28
 archived_at: null
 ---
 

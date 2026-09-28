@@ -64,6 +64,11 @@ const astroConfig = defineConfig({
     parserOptions: { projectService: false, project: "./tsconfig.json", tsconfigRootDir: import.meta.dirname },
   },
   rules: {
+    // A top-level `return` in frontmatter (how a page serves a 404) crashes this rule: it walks up
+    // for the enclosing function and astro-eslint-parser gives that return no parent node, aborting
+    // the whole ESLint run. Not a finding being silenced -- the rule cannot run at all on such a
+    // file (typescript-eslint 8.70.0 / astro-eslint-parser 3.1.0). It stays on for .ts/.tsx.
+    "@typescript-eslint/no-misused-promises": "off",
     "astro/no-set-html-directive": "error",
     "astro/no-unused-css-selector": "warn",
     "astro/prefer-class-list-directive": "warn",

@@ -46,7 +46,9 @@ function formatBirthDate(value: string) {
         <ul class="mb-6 space-y-2">
           {children.map((child) => (
             <li class="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-              <span class="font-semibold">{child.name}</span>
+              <a href={`/children/${child.id}`} class="font-semibold transition-colors hover:text-purple-200">
+                {child.name}
+              </a>
               {child.birth_date && (
                 <span class="text-sm text-blue-100/60">ur. {formatBirthDate(child.birth_date)}</span>
               )}

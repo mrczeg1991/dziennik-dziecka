@@ -1,0 +1,80 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AddNoteForm from "@/components/notes/AddNoteForm";
+import NoteItem from "@/components/notes/NoteItem";
+import { createClient } from "@/lib/supabase";
+import { getChild } from "@/lib/children";
+import { listNotes, type Note } from "@/lib/notes";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const id = Astro.params.id ?? "";
+// An error can come from adding, editing or deleting, so the page owns its display rather
+// than any one form.
+const error = Astro.url.searchParams.get("error");
+
+// A malformed id never reaches the database. An unknown child and one belonging to another
+// account are both a plain 404, so the page is indistinguishable from one that never existed.
+if (!UUID_RE.test(id)) {
+  return new Response(null, { status: 404 });
+}
+
+// Unreachable in practice: /children is protected and without Supabase there is no signed-in
+// user for the middleware to let through.
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (!supabase) {
+  return new Response(null, { status: 404 });
+}
+
+const child = await getChild(supabase, id);
+if (!child) {
+  return new Response(null, { status: 404 });
+}
+
+// A failed query must never be shown as "no notes".
+let notes: Note[] = [];
+let listFailed = false;
+try {
+  notes = await listNotes(supabase, child.id);
+} catch {
+  listFailed = true;
+}
+---
+
+<Layout title={child.name}>
+  <div class="bg-cosmic flex min-h-screen justify-center p-4">
+    <div class="w-full max-w-2xl rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+      <a href="/dashboard" class="mb-4 inline-block text-sm text-blue-100/70 transition-colors hover:text-blue-100">
+        &larr; Moje dzieci
+      </a>
+      <h1 class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-3xl font-bold text-transparent">
+        {child.name}
+      </h1>
+
+      <h2 class="mb-3 text-lg font-semibold text-blue-100">Dodaj notatkę</h2>
+      <AddNoteForm childId={child.id} client:load />
+
+      {error && (
+        <p class="mt-6 rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">{error}</p>
+      )}
+
+      <h2 class="mt-6 mb-3 text-lg font-semibold text-blue-100">Notatki</h2>
+      {listFailed ? (
+        <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+          Nie udało się wczytać notatek. Odśwież stronę.
+        </p>
+      ) : notes.length === 0 ? (
+        <p class="text-center text-blue-100/70">Nie dodano jeszcze żadnej notatki.</p>
+      ) : (
+        <ul class="space-y-3">
+          {notes.map((note) => (
+            <li>
+              {/* Nothing in a row is interactive until the parent clicks "Edytuj" or "Usuń". */}
+              <NoteItem note={note} childId={child.id} client:visible />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </div>
+</Layout>

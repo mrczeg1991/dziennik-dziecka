@@ -433,33 +433,33 @@ Two forward-looking notes:
 
 #### Automated
 
-- [x] 1.1 Migration applies from scratch: `npx supabase db reset`
-- [x] 1.2 Type checking passes: `npx astro check`
-- [x] 1.3 Linting passes: `npm run lint`
+- [x] 1.1 Migration applies from scratch: `npx supabase db reset` — 9cbd41e
+- [x] 1.2 Type checking passes: `npx astro check` — 9cbd41e
+- [x] 1.3 Linting passes: `npm run lint` — 9cbd41e
 
 #### Manual
 
-- [x] 1.4 In local Studio as one account, inserting a note whose `child_id` belongs to a second account is rejected by the policy
-- [x] 1.5 `delete from public.notes` as an authenticated user affects no rows, because no `delete` policy exists
+- [x] 1.4 In local Studio as one account, inserting a note whose `child_id` belongs to a second account is rejected by the policy — 9cbd41e
+- [x] 1.5 `delete from public.notes` as an authenticated user affects no rows, because no `delete` policy exists — 9cbd41e
 
 ### Phase 2: Per-child page and note flow
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx astro check`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Production build succeeds: `npm run build`
+- [x] 2.1 Type checking passes: `npx astro check`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Production build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 2.4 From "Moje dzieci", clicking a child opens their page; saving a note with the prefilled time shows it immediately
-- [ ] 2.5 A note backdated three days appears in date order among older notes, not at the top of the list
-- [ ] 2.6 Two notes backdated to the same minute keep a stable order, most recently written first
-- [ ] 2.7 Editing a note's text updates the list with no "edited" marker anywhere
-- [ ] 2.8 Deleting takes two clicks and the note disappears from the list
-- [ ] 2.9 Sign out, sign in, reopen the child: every surviving note is still there with its original date and time
-- [ ] 2.10 A future date/time and an empty note are both rejected with a Polish message
-- [ ] 2.11 `/children/<random-uuid>` returns 404
+- [x] 2.4 From "Moje dzieci", clicking a child opens their page; saving a note with the prefilled time shows it immediately
+- [x] 2.5 A note backdated three days appears in date order among older notes, not at the top of the list
+- [x] 2.6 Two notes backdated to the same minute keep a stable order, most recently written first
+- [x] 2.7 Editing a note's text updates the list with no "edited" marker anywhere
+- [x] 2.8 Deleting takes two clicks and the note disappears from the list
+- [x] 2.9 Sign out, sign in, reopen the child: every surviving note is still there with its original date and time
+- [x] 2.10 A future date/time and an empty note are both rejected with a Polish message
+- [x] 2.11 `/children/<random-uuid>` returns 404
 
 ### Phase 3: Verification and deploy
 
