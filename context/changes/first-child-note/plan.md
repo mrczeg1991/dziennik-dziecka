@@ -446,31 +446,31 @@ Two forward-looking notes:
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npx astro check`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Production build succeeds: `npm run build`
+- [x] 2.1 Type checking passes: `npx astro check` — 1eb6f15
+- [x] 2.2 Linting passes: `npm run lint` — 1eb6f15
+- [x] 2.3 Production build succeeds: `npm run build` — 1eb6f15
 
 #### Manual
 
-- [x] 2.4 From "Moje dzieci", clicking a child opens their page; saving a note with the prefilled time shows it immediately
-- [x] 2.5 A note backdated three days appears in date order among older notes, not at the top of the list
-- [x] 2.6 Two notes backdated to the same minute keep a stable order, most recently written first
-- [x] 2.7 Editing a note's text updates the list with no "edited" marker anywhere
-- [x] 2.8 Deleting takes two clicks and the note disappears from the list
-- [x] 2.9 Sign out, sign in, reopen the child: every surviving note is still there with its original date and time
-- [x] 2.10 A future date/time and an empty note are both rejected with a Polish message
-- [x] 2.11 `/children/<random-uuid>` returns 404
+- [x] 2.4 From "Moje dzieci", clicking a child opens their page; saving a note with the prefilled time shows it immediately — 1eb6f15
+- [x] 2.5 A note backdated three days appears in date order among older notes, not at the top of the list — 1eb6f15
+- [x] 2.6 Two notes backdated to the same minute keep a stable order, most recently written first — 1eb6f15
+- [x] 2.7 Editing a note's text updates the list with no "edited" marker anywhere — 1eb6f15
+- [x] 2.8 Deleting takes two clicks and the note disappears from the list — 1eb6f15
+- [x] 2.9 Sign out, sign in, reopen the child: every surviving note is still there with its original date and time — 1eb6f15
+- [x] 2.10 A future date/time and an empty note are both rejected with a Polish message — 1eb6f15
+- [x] 2.11 `/children/<random-uuid>` returns 404 — 1eb6f15
 
 ### Phase 3: Verification and deploy
 
 #### Automated
 
-- [ ] 3.1 Smoke passes locally against `npm run preview` with local Supabase: `BASE_URL=http://localhost:4321 npm run smoke`
-- [ ] 3.2 Linting passes: `npm run lint`
+- [x] 3.1 Smoke passes locally against `npm run preview` with local Supabase: `BASE_URL=http://localhost:4321 npm run smoke`
+- [x] 3.2 Linting passes: `npm run lint`
 - [ ] 3.3 CI `ci` and `smoke` jobs are green on the PR
 
 #### Manual
 
-- [ ] 3.4 Migration pushed to the hosted Supabase project (`npx supabase db push`) before `wrangler deploy`
-- [ ] 3.5 On the deployed Worker, a real account adds, edits and deletes a note and the list behaves as it does locally
-- [ ] 3.6 With two real accounts on production, the second sees a 404 on the first's child URL and none of its notes
+- [x] 3.4 Migration pushed to the hosted Supabase project (`npx supabase db push`) before `wrangler deploy`
+- [x] 3.5 On the deployed Worker, a real account adds, edits and deletes a note and the list behaves as it does locally
+- [x] 3.6 With two real accounts on production, the second sees a 404 on the first's child URL and none of its notes

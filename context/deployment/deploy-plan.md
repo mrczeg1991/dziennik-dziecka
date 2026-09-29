@@ -78,7 +78,7 @@ Potem przy każdym wdrożeniu, które niesie nowe migracje:
 npx supabase db push
 ```
 
-Nakłada na produkcyjną bazę migracje z `supabase/migrations/`, których tam jeszcze nie ma (np. tabelę `children` z RLS). **Każda przyszła migracja wymaga tego kroku przed deployem kodu, który od niej zależy** — inaczej nowy kod trafi na bazę bez tabeli i np. `/dashboard` zwróci błąd.
+Nakłada na produkcyjną bazę migracje z `supabase/migrations/`, których tam jeszcze nie ma (np. tabele `children` i `notes` z RLS). **Każda przyszła migracja wymaga tego kroku przed deployem kodu, który od niej zależy** — inaczej nowy kod trafi na bazę bez tabeli i np. `/dashboard` zwróci błąd.
 
 ### 7. Build i deploy
 
