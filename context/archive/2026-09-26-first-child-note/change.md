@@ -1,10 +1,10 @@
 ---
 change_id: first-child-note
 title: First child note
-status: impl_reviewed
+status: archived
 created: 2026-09-26
-updated: 2026-09-29
-archived_at: null
+updated: 2026-10-01
+archived_at: 2026-10-01T16:38:09Z
 ---
 
 ## Notes

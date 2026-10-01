@@ -3,7 +3,7 @@ project: Dziennik dziecka
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-09-27
+updated: 2026-10-01
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -42,7 +42,7 @@ Rodzic dwójki dzieci nie pamięta drobnych faktów o nich — pomiarów, objaw�
 | ID   | Change ID              | Outcome (user can …)                                                                 | Prerequisites | PRD refs                     | Status   | Issue |
 | ---- | ---------------------- | ------------------------------------------------------------------------------------ | ------------- | ---------------------------- | -------- | ----- |
 | S-01 | child-profiles         | rodzic po założeniu konta i zalogowaniu dodaje profil dziecka i widzi listę swoich dzieci | —             | FR-001, FR-002, FR-003       | done     | #1    |
-| S-02 | first-child-note       | rodzic zapisuje dowolną notatkę o dziecku i widzi ją na liście notatek tego dziecka  | S-01          | US-01, FR-004, FR-005        | in-progress | #2    |
+| S-02 | first-child-note       | rodzic zapisuje dowolną notatkę o dziecku i widzi ją na liście notatek tego dziecka  | S-01          | US-01, FR-004, FR-005        | done     | #2    |
 
 ## Baseline
 
@@ -86,7 +86,7 @@ Brak. Logowanie i frontend są obecne, a brakująca warstwa danych jest wprowadz
 - **Unknowns:**
   - Czy data/godzina notatki to zawsze moment zapisu, czy rodzic może ustawić ją wstecz (np. objaw zauważony wczoraj)? FR-004 mówi tylko „with a date/time”. — Owner: user. Block: no.
 - **Risk:** Gwiazda przewodnia — musi spełnić obie zasady ochronne PRD (notatka nigdy nie ginie ani nie jest po cichu nadpisywana; widzi ją tylko właściciel konta). Idzie zaraz po S-01, bo notatka musi być przypisana do istniejącego dziecka.
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -118,3 +118,4 @@ Brak. Logowanie i frontend są obecne, a brakująca warstwa danych jest wprowadz
 ## Done
 
 - **S-01: rodzic po założeniu konta i zalogowaniu dodaje profil dziecka i widzi listę swoich dzieci (zamiast pustego dashboardu ze startera).** — Archived 2026-09-24 → `context/archive/2026-09-23-child-profiles/`. Lesson: —.
+- **S-02: rodzic zapisuje dowolną notatkę tekstową o wybranym dziecku z datą/godziną i od razu widzi ją na liście notatek tego dziecka; notatka przetrwa wylogowanie i ponowne zalogowanie.** — Archived 2026-10-01 → `context/archive/2026-09-26-first-child-note/`. Lesson: —.
