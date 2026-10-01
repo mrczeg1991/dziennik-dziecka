@@ -64,15 +64,23 @@ const astroConfig = defineConfig({
     parserOptions: { projectService: false, project: "./tsconfig.json", tsconfigRootDir: import.meta.dirname },
   },
   rules: {
-    // A top-level `return` in frontmatter (how a page serves a 404) crashes this rule: it walks up
-    // for the enclosing function and astro-eslint-parser gives that return no parent node, aborting
-    // the whole ESLint run. Not a finding being silenced -- the rule cannot run at all on such a
-    // file (typescript-eslint 8.70.0 / astro-eslint-parser 3.1.0). It stays on for .ts/.tsx.
-    "@typescript-eslint/no-misused-promises": "off",
     "astro/no-set-html-directive": "error",
     "astro/no-unused-css-selector": "warn",
     "astro/prefer-class-list-directive": "warn",
   },
+});
+
+// A top-level `return` in frontmatter (how a page serves a 404) crashes this rule: it walks up for
+// the enclosing function and astro-eslint-parser gives that return no parent node, aborting the
+// whole ESLint run. Not a finding being silenced -- the rule cannot run at all on such a file
+// (typescript-eslint 8.70.0 / astro-eslint-parser 3.1.0), and an inline eslint-disable comment does
+// not help, because directives filter reported problems only after the rule has already thrown.
+// Scoped to the pages that actually return early rather than to every .astro file, so the rule
+// stays live everywhere else; extend this list when a new page serves a 404 or redirect from
+// frontmatter, and drop the block once astro-eslint-parser gives top-level returns a parent.
+const astroEarlyReturnConfig = defineConfig({
+  files: ["src/pages/children/**/*.astro"],
+  rules: { "@typescript-eslint/no-misused-promises": "off" },
 });
 
 const scriptsConfig = defineConfig({
@@ -91,6 +99,7 @@ export default defineConfig(
   eslintPluginAstro.configs["flat/recommended"],
   eslintPluginAstro.configs["flat/jsx-a11y-recommended"],
   astroConfig,
+  astroEarlyReturnConfig,
   scriptsConfig,
   eslintPluginPrettier,
 );

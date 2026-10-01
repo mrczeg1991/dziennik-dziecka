@@ -2,8 +2,9 @@
 import Layout from "@/layouts/Layout.astro";
 import AddNoteForm from "@/components/notes/AddNoteForm";
 import NoteItem from "@/components/notes/NoteItem";
+import { ServerError } from "@/components/auth/ServerError";
 import { createClient } from "@/lib/supabase";
-import { getChild } from "@/lib/children";
+import { getChild, type Child } from "@/lib/children";
 import { listNotes, type Note } from "@/lib/notes";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -12,6 +13,10 @@ const id = Astro.params.id ?? "";
 // An error can come from adding, editing or deleting, so the page owns its display rather
 // than any one form.
 const error = Astro.url.searchParams.get("error");
+
+// The two 503 responses below are written out rather than shared through a helper: every use
+// of such a helper sits after a top-level `return`, which the Astro language server's scope
+// analysis loses track of, reporting it as unused on every `astro check`.
 
 // A malformed id never reaches the database. An unknown child and one belonging to another
 // account are both a plain 404, so the page is indistinguishable from one that never existed.
@@ -23,10 +28,24 @@ if (!UUID_RE.test(id)) {
 // user for the middleware to let through.
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (!supabase) {
-  return new Response(null, { status: 404 });
+  return new Response("Nie udało się wczytać strony. Spróbuj ponownie.", {
+    status: 503,
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
 }
 
-const child = await getChild(supabase, id);
+// A page that cannot be served is not a page that does not exist: a 404 here would tell the
+// parent their child is gone because the database was briefly unreachable. Only a null result
+// — an unknown child, or one belonging to another account — is a 404.
+let child: Child | null;
+try {
+  child = await getChild(supabase, id);
+} catch {
+  return new Response("Nie udało się wczytać strony. Spróbuj ponownie.", {
+    status: 503,
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
+}
 if (!child) {
   return new Response(null, { status: 404 });
 }
@@ -55,7 +74,10 @@ try {
       <AddNoteForm childId={child.id} client:load />
 
       {error && (
-        <p class="mt-6 rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">{error}</p>
+        <div class="mt-6">
+          {/* Same panel the auth forms and the dashboard use; static, nothing here is interactive. */}
+          <ServerError message={error} />
+        </div>
       )}
 
       <h2 class="mt-6 mb-3 text-lg font-semibold text-blue-100">Notatki</h2>
