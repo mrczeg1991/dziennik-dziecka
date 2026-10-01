@@ -1,7 +1,7 @@
 ---
 change_id: first-child-note
 title: First child note
-status: implementing
+status: impl_reviewed
 created: 2026-09-26
 updated: 2026-09-29
 archived_at: null

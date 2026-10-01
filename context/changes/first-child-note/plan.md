@@ -465,12 +465,12 @@ Two forward-looking notes:
 
 #### Automated
 
-- [x] 3.1 Smoke passes locally against `npm run preview` with local Supabase: `BASE_URL=http://localhost:4321 npm run smoke`
-- [x] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 CI `ci` and `smoke` jobs are green on the PR
+- [x] 3.1 Smoke passes locally against `npm run preview` with local Supabase: `BASE_URL=http://localhost:4321 npm run smoke` — 3bcc492
+- [x] 3.2 Linting passes: `npm run lint` — 3bcc492
+- [x] 3.3 CI `ci` and `smoke` jobs are green on the PR — 3bcc492
 
 #### Manual
 
-- [x] 3.4 Migration pushed to the hosted Supabase project (`npx supabase db push`) before `wrangler deploy`
-- [x] 3.5 On the deployed Worker, a real account adds, edits and deletes a note and the list behaves as it does locally
-- [x] 3.6 With two real accounts on production, the second sees a 404 on the first's child URL and none of its notes
+- [x] 3.4 Migration pushed to the hosted Supabase project (`npx supabase db push`) before `wrangler deploy` — 3bcc492
+- [x] 3.5 On the deployed Worker, a real account adds, edits and deletes a note and the list behaves as it does locally — 3bcc492
+- [x] 3.6 With two real accounts on production, the second sees a 404 on the first's child URL and none of its notes — 3bcc492
