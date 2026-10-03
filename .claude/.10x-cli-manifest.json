@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.22.2",
   "manifestVersion": 3,
-  "lastApplied": "2026-09-26T21:15:43.068Z",
-  "lessonId": "m2l4",
+  "lastApplied": "2026-10-01T21:05:43.204Z",
+  "lessonId": "m3l1",
   "course": "10xdevs4",
   "tool": "claude-code",
   "files": {
@@ -274,6 +274,26 @@
           "scripts/metadata-guard.mjs": "a6c567ca15c93fe614d6a484602bb318272da3b38f1098b755335ee4da7fab68",
           "scripts/prose-json-check.mjs": "44696db6a11664a0369f723dd6c3b379f36dc9774385bddedbb178420aea95cf",
           "scripts/prose-json-check.test.mjs": "873ce640fd679720da65ee145dde13cf354ed664fcfff25a3f11bc5cc6324d51"
+        }
+      },
+      "10x-ui": {
+        "files": [
+          "SKILL.md",
+          "references/ui-quality-checklist.md"
+        ],
+        "contentHashes": {
+          "SKILL.md": "27b5ece1c54e63837b0072ba88dcbd07e39dc2ea02e58b8d0c7798b52e2c6899",
+          "references/ui-quality-checklist.md": "de2f830b52f5de2bd480f6b283cb23598190958c9b8f868b0322494188b7e0e4"
+        }
+      },
+      "10x-test-plan": {
+        "files": [
+          "SKILL.md",
+          "references/test-plan-schema.md"
+        ],
+        "contentHashes": {
+          "SKILL.md": "d0b015d0e84d67b5a662805dd47b6b68c1275dbd958a98393619d79bbe0e8fcf",
+          "references/test-plan-schema.md": "4969dc97be7cb32abd9789e3ff1e3d0e4b95e1180d23dd0a656031591eb421a3"
         }
       }
     },
@@ -1054,7 +1074,7 @@
       "configs": []
     },
     "m3l1": {
-      "appliedAt": "2026-10-01T19:20:44.199Z",
+      "appliedAt": "2026-10-01T21:05:43.204Z",
       "skills": {
         "10x-idea-check": {
           "files": [
@@ -1171,10 +1191,82 @@
             "SKILL.md",
             "references/progress-format.md"
           ]
+        },
+        "10x-implement": {
+          "files": [
+            "SKILL.md",
+            "references/implementation-discipline.md",
+            "references/progress-format.md"
+          ]
+        },
+        "10x-archive": {
+          "files": [
+            "SKILL.md",
+            "references/archive-sha.md"
+          ]
+        },
+        "10x-status": {
+          "files": [
+            "SKILL.md",
+            "references/progress-format.md"
+          ]
+        },
+        "10x-impl-review": {
+          "files": [
+            "SKILL.md",
+            "references/progress-format.md"
+          ]
+        },
+        "10x-frame": {
+          "files": [
+            "SKILL.md"
+          ]
+        },
+        "10x-research": {
+          "files": [
+            "SKILL.md",
+            "references/research-document.md",
+            "references/task-orchestration.md",
+            "scripts/metadata-guard.mjs",
+            "scripts/prose-json-check.mjs",
+            "scripts/prose-json-check.test.mjs"
+          ]
+        },
+        "10x-ui": {
+          "files": [
+            "SKILL.md",
+            "references/ui-quality-checklist.md"
+          ]
+        },
+        "10x-test-plan": {
+          "files": [
+            "SKILL.md",
+            "references/test-plan-schema.md"
+          ]
         }
       },
-      "prompts": [],
-      "configs": []
+      "prompts": [
+        "skill-explainer.md",
+        "m1l5-1-plan-integration.md",
+        "m1l5-2-constrain-approach.md",
+        "m1l5-3-extend-prerequisites.md",
+        "m1l5-4-store-plan.md"
+      ],
+      "configs": [],
+      "representation": {
+        "lang": "en",
+        "tool": "claude-code",
+        "courseRules": true,
+        "rules": true
+      },
+      "installedReleaseId": "r-0628f35a60af9a79c8afc1521f960249e876989acf4848552723d5643fd31bd3",
+      "installedManifestHash": "ac135ee6a924df7f040b18fdd9b16989370f052dbf9fd99b299f2bb3f10f9c36"
     }
+  },
+  "managedRules": {
+    "path": "CLAUDE.md",
+    "begin": "<!-- BEGIN @przeprogramowani/10x-cli -->",
+    "end": "<!-- END @przeprogramowani/10x-cli -->",
+    "upstreamHash": "64dd32ad11c5a5ae8c576c808bd7d39c5c7642c0b14abab431acc3c2e75f73c4"
   }
 }

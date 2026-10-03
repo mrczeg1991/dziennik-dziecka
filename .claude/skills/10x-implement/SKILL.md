@@ -91,7 +91,6 @@ When the phase is delegated, make one `Task` call (`subagent_type: general-purpo
 - Every entry from `context/foundation/lessons.md`, if present — the subagent cannot read the file unless you paste the entries.
 - The mismatch taxonomy from "Implementation Philosophy": adapt **Minor** mismatches directly and report them; on a **Structural** mismatch, stop and report rather than adapting or redesigning.
 - Hard boundaries: implement code changes ONLY. Do not run the gate stack, do not stage, do not commit, do not touch the `## Progress` section or any checkbox, do not edit Phase blocks, do not go outside the plan's scope. Do not call `AskUserQuestion` — the user is talking to you, not to the subagent; an open question comes back in the return message instead.
-- If you are starting from the `master` or `develop` branch, create a new branch for the implementation.
 
 Require this structured final message as the return value, not a human-facing note:
 
