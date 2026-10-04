@@ -1,7 +1,7 @@
 ---
 change_id: testing-isolation-boundary
 title: Testing isolation boundary
-status: preparing
+status: plan_reviewed
 created: 2026-10-03
 updated: 2026-10-03
 archived_at: null
