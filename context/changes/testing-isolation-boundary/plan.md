@@ -791,15 +791,15 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [ ] 1.1 Port exclusion check shows no overlap with the new port block
-- [ ] 1.2 `supabase start` completes and `supabase status` reports API and DB running on the new ports
-- [ ] 1.3 Grant query and `auth.users` NOT NULL column query both return results against the relocated local database
+- [x] 1.1 Port exclusion check shows no overlap with the new port block
+- [x] 1.2 `supabase start` completes and `supabase status` reports API and DB running on the new ports
+- [x] 1.3 Grant query and `auth.users` NOT NULL column query both return results against the relocated local database
 
 #### Manual
 
-- [ ] 1.5 `npm run dev` loads and a local sign-in succeeds
-- [ ] 1.6 Grant query result pasted into `change.md` and matches the expected privileges
-- [ ] 1.7 Minimal working `auth.users` insert confirmed and recorded in `change.md`
+- [x] 1.5 `npm run dev` loads and a local sign-in succeeds
+- [x] 1.6 Grant query result pasted into `change.md` and matches the expected privileges
+- [x] 1.7 Minimal working `auth.users` insert confirmed and recorded in `change.md`
 
 ### Phase 2: Suite skeleton and its negative control
 
