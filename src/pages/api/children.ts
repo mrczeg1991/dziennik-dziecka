@@ -54,7 +54,7 @@ export const POST: APIRoute = async (context) => {
 
   const supabase = createClient(context.request.headers, context.cookies);
   if (!supabase) {
-    return fail("Supabase is not configured");
+    return fail("Aplikacja nie jest poprawnie skonfigurowana");
   }
 
   const error = await createChild(supabase, user.id, { name, birthDate });

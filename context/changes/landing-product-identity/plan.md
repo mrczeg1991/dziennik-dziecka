@@ -87,11 +87,12 @@ page, walking sign-up → confirm-email and sign-in → dashboard, and confirmin
   a deploy risk with no upside for this slice.
 - **Not deleting `CLAUDE.md.scaffold`.** It is a provenance record referenced by
   `context/changes/bootstrap-verification/verification.md:53-54`, not an unused artifact.
-- **Not translating the 5 "Supabase is not configured" sites** (`api/auth/signin.ts:11`,
-  `api/auth/signup.ts:11`, `api/children.ts:57`, `api/notes.ts:26`, `api/notes/[id].ts:24`)
-  **or mapping raw Supabase GoTrue error text to Polish.** The config string shows only on a
-  misconfigured deployment; the GoTrue text originates outside this repo, and a map keyed on
-  its English wording breaks silently when Supabase rewords a message.
+- ~~**Not translating the 5 "Supabase is not configured" sites or mapping raw Supabase
+  GoTrue error text to Polish.**~~ **Reversed during Phase 2 (2026-10-04)** at the user's
+  request, after a wrong-password attempt surfaced "Invalid login credentials" in the UI.
+  The original objection — that a map keyed on upstream English wording breaks silently when
+  Supabase rewords — does not apply to `error.code`, a stable typed union in
+  `@supabase/auth-js` (supabase-js 2.116.0). Now in scope; see Phase 2 change #6.
 - **Not adding a password-recovery link.** No recovery flow exists, by a decision recorded at
   `context/foundation/test-plan.md:219-221`.
 - **Not introducing an i18n library or locale switching.** Polish is the only language;
@@ -273,6 +274,26 @@ adres email`, `:32` `Hasło jest wymagane`, `:34` `Hasło musi mieć co najmniej
 restated in a form that needs no plural branching — phrase it as a count of remaining
 characters rather than an English-style singular/plural pair.
 
+#### 6. Polish auth error text and config messages
+
+**File**: `src/lib/auth-errors.ts` (new), `src/pages/api/auth/signin.ts`,
+`src/pages/api/auth/signup.ts`, `src/pages/api/children.ts`, `src/pages/api/notes.ts`,
+`src/pages/api/notes/[id].ts`
+
+**Intent**: Stop English reaching the parent through the error panel. Supabase returns its
+own messages in English, and the five `"Supabase is not configured"` literals are English
+too. Added mid-phase after the original plan excluded this; see "What We're NOT Doing".
+
+**Contract**: A new `src/lib/auth-errors.ts` exports
+`authErrorMessage(error: AuthError, fallback: string): string`, keyed on `error.code` — the
+stable typed union from `@supabase/auth-js`, not on `error.message`. It covers only codes
+reachable from `signInWithPassword` and `signUp` with email+password; any other code returns
+the caller's `fallback`, so no English escapes. `api/auth/signin.ts` and
+`api/auth/signup.ts` call it with fallbacks "Nie udało się zalogować. Spróbuj ponownie."
+and "Nie udało się założyć konta. Spróbuj ponownie." respectively. All five
+`"Supabase is not configured"` literals become `"Aplikacja nie jest poprawnie skonfigurowana"`.
+The `?error=` redirect shape and every success redirect are unchanged.
+
 #### 5. Password visibility toggle
 
 **File**: `src/components/auth/PasswordToggle.tsx`
@@ -292,6 +313,7 @@ announces it, and this component is used only by the two auth forms.
 - Production build succeeds: `npm run build`
 - Smoke walk passes unchanged, including the sign-in redirect to `/dashboard` and the sign-out redirect to `/`: `npm run smoke`
 - `git grep -n "Sign in\|Sign up\|Signing in\|Creating account\|Show password\|Hide password" -- src/` returns no hits
+- `git grep -n "Supabase is not configured" -- src/` returns no hits
 
 #### Manual Verification:
 
@@ -300,6 +322,7 @@ announces it, and this component is used only by the two auth forms.
 - Registering a new account lands on a Polish confirm-email page, and its link returns to sign-in
 - The password eye toggle still shows and hides the password
 - Signing in with correct credentials still reaches `/dashboard`
+- Signing in with a wrong password shows a Polish message, not Supabase's English text
 
 **Implementation Note**: After completing this phase and all automated verification passes,
 pause here for manual confirmation from the human that the manual testing was successful
@@ -457,36 +480,38 @@ updating. That is a future change's problem, not this one's.
 
 #### Automated
 
-- [x] 1.1 Linting passes: `npm run lint`
-- [x] 1.2 Type and template checking passes: `npx astro check`
-- [x] 1.3 Production build succeeds: `npm run build`
-- [x] 1.4 `git grep -n -i "Welcome\.astro\|Topbar" -- src/` returns no hits
-- [x] 1.5 Smoke walk passes against a local preview: `npm run smoke`
+- [x] 1.1 Linting passes: `npm run lint` — e2adb40
+- [x] 1.2 Type and template checking passes: `npx astro check` — e2adb40
+- [x] 1.3 Production build succeeds: `npm run build` — e2adb40
+- [x] 1.4 `git grep -n -i "Welcome\.astro\|Topbar" -- src/` returns no hits — e2adb40
+- [x] 1.5 Smoke walk passes against a local preview: `npm run smoke` — e2adb40
 
 #### Manual
 
-- [x] 1.6 Signed out, `/` shows the Polish product page with no template cards, and the browser tab reads "Dziennik dziecka"
-- [x] 1.7 Both landing buttons reach `/auth/signin` and `/auth/signup`
-- [x] 1.8 Signed in, `/` still redirects to `/dashboard`
-- [x] 1.9 Page source declares `<html lang="pl">`, and `/dashboard` still shows the title "Moje dzieci"
+- [x] 1.6 Signed out, `/` shows the Polish product page with no template cards, and the browser tab reads "Dziennik dziecka" — e2adb40
+- [x] 1.7 Both landing buttons reach `/auth/signin` and `/auth/signup` — e2adb40
+- [x] 1.8 Signed in, `/` still redirects to `/dashboard` — e2adb40
+- [x] 1.9 Page source declares `<html lang="pl">`, and `/dashboard` still shows the title "Moje dzieci" — e2adb40
 
 ### Phase 2: Polish auth flow
 
 #### Automated
 
-- [ ] 2.1 Linting passes: `npm run lint`
-- [ ] 2.2 Type and template checking passes: `npx astro check`
-- [ ] 2.3 Production build succeeds: `npm run build`
-- [ ] 2.4 Smoke walk passes unchanged, including the sign-in redirect to `/dashboard` and the sign-out redirect to `/`: `npm run smoke`
-- [ ] 2.5 `git grep -n "Sign in\|Sign up\|Signing in\|Creating account\|Show password\|Hide password" -- src/` returns no hits
+- [x] 2.1 Linting passes: `npm run lint`
+- [x] 2.2 Type and template checking passes: `npx astro check`
+- [x] 2.3 Production build succeeds: `npm run build`
+- [x] 2.4 Smoke walk passes unchanged, including the sign-in redirect to `/dashboard` and the sign-out redirect to `/`: `npm run smoke`
+- [x] 2.5 `git grep -n "Sign in\|Sign up\|Signing in\|Creating account\|Show password\|Hide password" -- src/` returns no hits
+- [x] 2.11 `git grep -n "Supabase is not configured" -- src/` returns no hits
 
 #### Manual
 
-- [ ] 2.6 `/auth/signin` and `/auth/signup` are fully Polish, including tab titles, and the links between them work
-- [ ] 2.7 Submitting each form empty shows Polish validation messages
-- [ ] 2.8 Registering a new account lands on a Polish confirm-email page, and its link returns to sign-in
-- [ ] 2.9 The password eye toggle still shows and hides the password
-- [ ] 2.10 Signing in with correct credentials still reaches `/dashboard`
+- [x] 2.6 `/auth/signin` and `/auth/signup` are fully Polish, including tab titles, and the links between them work
+- [x] 2.7 Submitting each form empty shows Polish validation messages
+- [x] 2.8 Registering a new account lands on a Polish confirm-email page, and its link returns to sign-in
+- [x] 2.9 The password eye toggle still shows and hides the password
+- [x] 2.10 Signing in with correct credentials still reaches `/dashboard`
+- [x] 2.12 Signing in with a wrong password shows a Polish message, not Supabase's English text
 
 ### Phase 3: Remove the remaining starter traces
 
