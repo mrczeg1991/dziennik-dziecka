@@ -817,29 +817,29 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [x] 3.1 `npm run test:db` passes with all three files green
-- [x] 3.2 Widening `notes_select_own` to `using (true)` fails the cross-account select assertion
-- [x] 3.3 Removing the child-ownership `exists` from `notes_insert_own` fails the foreign-`child_id` insert assertion
-- [x] 3.4 `npm run smoke` still passes against the relocated local stack
-- [x] 3.5 Adding a permissive `children` update policy fails the zero-rows `children` update assertion
+- [x] 3.1 `npm run test:db` passes with all three files green — 385c71a
+- [x] 3.2 Widening `notes_select_own` to `using (true)` fails the cross-account select assertion — 385c71a
+- [x] 3.3 Removing the child-ownership `exists` from `notes_insert_own` fails the foreign-`child_id` insert assertion — 385c71a
+- [x] 3.4 `npm run smoke` still passes against the relocated local stack — 385c71a
+- [x] 3.5 Adding a permissive `children` update policy fails the zero-rows `children` update assertion — 385c71a
 
 #### Manual
 
-- [x] 3.6 Every assertion traces to one row of the widening table, with no row uncovered
-- [x] 3.7 The characterization file reads as current behaviour, not as a guarantee
+- [x] 3.6 Every assertion traces to one row of the widening table, with no row uncovered — 385c71a
+- [x] 3.7 The characterization file reads as current behaviour, not as a guarantee — 385c71a
 
 ### Phase 4: Risk #4 — destruction and column scope
 
 #### Automated
 
-- [ ] 4.1 `npm run test:db` passes with all four files green
-- [ ] 4.2 Adding a permissive `for delete` policy fails the destruction assertion
-- [ ] 4.3 The delete assertion passes with no exception handling, confirming no error is raised
+- [x] 4.1 `npm run test:db` passes with all four files green
+- [x] 4.2 Adding a permissive `for delete` policy fails the destruction assertion
+- [x] 4.3 The delete assertion passes with no exception handling, confirming no error is raised
 
 #### Manual
 
-- [ ] 4.4 The grant-versus-policy comment block is accurate enough to prevent a future `throws_ok`
-- [ ] 4.5 Column-posture assertions are labelled as characterization with the Fix B trigger named
+- [x] 4.4 The grant-versus-policy comment block is accurate enough to prevent a future `throws_ok`
+- [x] 4.5 Column-posture assertions are labelled as characterization with the Fix B trigger named
 
 ### Phase 5: Make it a gate
 

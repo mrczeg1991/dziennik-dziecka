@@ -378,3 +378,73 @@ green — because every count in every file is scoped to a fixture id. A bare
    `npm run preview -- --port <free>`, then `BASE_URL=http://localhost:<free>
 npm run smoke`. No daemon, and it is what CI actually verifies. Stop it
    afterwards with `astro preview stop`.
+
+### Phase 4 — Risk #4: destruction and column scope (2026-10-04)
+
+`03_notes_destruction.sql`, 4 assertions. Suite total: 4 files, **22 tests**, green.
+
+The file is deliberately mixed and labelled as such: assertions 1-2 are a
+**guarantee** (red = the guarantee broke), assertions 3-4 are
+**characterization** (red = the posture changed, which is the signal).
+
+#### Gate 4.2 failed in three distinct ways, and the shape matters
+
+Adding `create policy notes_delete_probe ... for delete using (true)`:
+
+| #   | Assertion                | Result                                                                        |
+| --- | ------------------------ | ----------------------------------------------------------------------------- |
+| 1   | delete affects zero rows | `have: 1, want: 0` — the delete now matches                                   |
+| 2   | the row is still present | `have: 0, want: 1` — **the row is gone**                                      |
+| 4   | re-date permitted        | `have: 0, want: 1` — collateral: the fixture row was destroyed by assertion 1 |
+
+Assertion 2 going red is the one that matters: it is actual destruction, and it
+is why the guarantee needs both halves. A zero-row count alone would also be
+satisfied by a row that never existed. Probe policy dropped; `pg_policies`
+re-verified back to exactly the five original policies, and the suite is green.
+
+#### Gate 4.3 is satisfied by construction
+
+The delete assertion is a `with ... returning 1` CTE with **no exception
+handling anywhere**. If the delete raised, the statement would error and the test
+would die rather than pass — so its passing is itself the evidence that nothing
+is raised. Verified by grep: the only occurrences of `throws_ok` and `42501` in
+the file are in comments explaining why they must not be used here.
+
+#### Citations verified against the actual files, not quoted from the plan
+
+- `archive/2026-09-26-first-child-note/plan.md:166` — "`delete from public.notes`
+  as an authenticated user affects no rows, because no `delete` policy exists".
+  Accurate; this is the one the file cites as authoritative.
+- `.../plan.md:58` — "no privilege exists that can destroy a row". Inverts the
+  mechanism: the privilege exists, the policy does not. Fine as prose, wrong as a
+  test specification. The file names it as the trap.
+- `src/lib/notes.ts:69` writes `{content, updated_at}`; `:88` writes
+  `{deleted_at}`. Confirmed by grep, exact lines.
+- `src/pages/api/notes/[id].ts:54` — "`occurred_at` is deliberately ignored: an
+  edit changes the text, never the moment". Confirmed verbatim.
+- `astro.config.mjs:19-20` — both `SUPABASE_URL` and `SUPABASE_KEY` declared
+  `context: "server", access: "secret"`. Confirmed.
+- `20260927205447_create_notes.sql:7` — `user_id ... on delete cascade` to
+  `auth.users`. Confirmed.
+
+#### F5 — Decision: Fix A, database half deferred
+
+Recorded here because `AGENTS.md:8` makes `context/archive/` immutable, so the
+finding's own file cannot be updated. **Pulled forward from Phase 6 change #4**,
+because `03_notes_destruction.sql` cites this entry in a comment and a committed
+forward reference to nothing is worse than an early note. Phase 6 still owns
+repeating it in §6.6.
+
+**Reasoning.** Fix A proposed two smoke assertions — that a raw `DELETE` is
+refused, and that an edit leaves `occurred_at` untouched. Both are superseded by
+`03_notes_destruction.sql`, which reaches the mechanism the smoke script cannot:
+Fix A's own blind spot was that asserting a refused `DELETE` "may need a direct
+PostgREST call rather than an app route, which the zero-dependency smoke script
+does not currently make". pgTAP makes that call natively. Fix B (column-scoped
+grants or a `before update` trigger) stays deferred — its practical exposure is
+nil while `SUPABASE_KEY` is a server-only secret.
+
+**Tripwire.** Assertions 3 and 4 of `03_notes_destruction.sql` are expected to
+**flip to failures** the day Fix B lands. That failure is the intended signal
+that the guarantee moved into Postgres. Update the file then; do not weaken the
+hardening to keep it green.
