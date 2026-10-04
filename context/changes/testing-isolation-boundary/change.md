@@ -207,3 +207,86 @@ intended edit. Phase 1 therefore left formatting alone and changed exactly two
 lines. Phase 6 must decide deliberately between a one-off whole-file format pass
 (landed as its own commit, so the correction diff stays readable) and scoping
 gate 6.1 to "no _new_ violations". Do not discover this mid-phase.
+
+### Phase 2 — suite skeleton and negative control (2026-10-04)
+
+Implemented on branch `testing-isolation-boundary-p2` in the worktree
+`.claude/worktrees/isolation-boundary-p2`, so that S-05 could proceed in
+parallel. **Both worktrees share one local Supabase stack** — `project_id` is
+committed in `config.toml`, so they resolve to the same containers and the same
+database. `supabase test db` is safe under that sharing (per-file transaction,
+rolled back), but a `supabase db reset` or `supabase stop` from either window
+hits the other. Coordinate before resetting.
+
+#### `\ir` resolves — no fallback needed
+
+A one-line probe confirmed `\ir helpers.inc` resolves under `supabase test db`
+before any assertion was written, so the plan's fallback (inlining the two
+`set local` statements per file and dropping the helper) was not needed.
+`pg_prove` collected `Files=1` with `helpers.inc` present in the directory,
+confirming the `.inc` extension excludes it from discovery.
+
+#### The connecting role is NOT a superuser — it holds BYPASSRLS
+
+The plan's Key Discoveries said "`supabase test db` connects as a superuser".
+Measured from inside a test file, that is wrong in its attribute and right in
+its conclusion:
+
+| property                        | value      |
+| ------------------------------- | ---------- |
+| `current_user` / `session_user` | `postgres` |
+| `is_superuser`                  | `off`      |
+| `rolsuper`                      | `false`    |
+| **`rolbypassrls`**              | **`true`** |
+| `auth.uid()`                    | `null`     |
+
+So the vacuous-pass hazard is real, but it comes from **BYPASSRLS**, not from
+superuser status. `00_helper_sanity.sql` assertion 1 therefore pins
+`rolbypassrls = true` rather than `is_superuser = on`: bypassing row security is
+the property that actually makes an un-switched assertion meaningless, and if a
+future image drops BYPASSRLS from `postgres`, fixture setup and the
+between-session switching in 01_/02_/03_ change character — assertion 1 is where
+that surfaces.
+
+Consequence for later phases: `tests.clear_authentication()` returns to
+`postgres`, which can still write fixtures _because of_ BYPASSRLS, not because
+it is a superuser. Do not describe it as "back to superuser".
+
+#### The break-check was stronger than the gate asked
+
+Gate 2.2 only required assertion 2 to fail. Commenting out
+`set_config('role', 'authenticated', true)` reddened **two** assertions:
+
+- **2** — `have: postgres|…000a` vs `want: authenticated|…000a`. The compound
+  `is()` named exactly which half broke: the claim was set, the role was not.
+- **4** — `have: 1, want: 0`. B's note became **visible**, because `postgres`
+  with BYPASSRLS is subject to no policy.
+
+That second failure is the control earning its place: it demonstrates live that
+without the role switch, assertion 4 would have passed having tested nothing —
+Risk #7 exactly. The helper was restored from the index via
+`git checkout -- supabase/tests/helpers.inc`; the break was never staged.
+
+#### Open item for Phase 3: `clear_authentication` has no test
+
+`helpers.inc` defines two functions; `00_helper_sanity.sql` exercises only
+`authenticate_as`. The plan fixes the sanity file at four assertions and gate 2.1
+says "all four", so no fifth was added. But §6.1 is going to publish the rule
+"the role switch has its own test, and any new helper function needs one too",
+and `clear_authentication` currently violates it.
+
+Phase 3 resolves this one of two ways, deliberately: its multi-user fixtures
+need superuser→A→setup→B transitions and will _use_ the function, which is
+coverage in practice; or add a dedicated assertion. Do not let it ship untested
+by default.
+
+#### Worktree setup gotcha (not caused by this change)
+
+A fresh git worktree has no `node_modules` and no `.astro/`. `npm`/`npx` resolve
+binaries by walking up to the main checkout, so they appear to work — but
+`npm run lint` reports **25 phantom errors** (`no-unsafe-*`, "type that cannot be
+resolved") purely because `.astro/types.d.ts` is absent. `npx astro sync`
+generates it and lint returns clean. Run it first in any worktree; do not read
+those 25 errors as a regression. Also note `npx prettier` is slow on first
+invocation in a worktree (cold resolution) — it can exceed a 120s timeout
+without anything being wrong.

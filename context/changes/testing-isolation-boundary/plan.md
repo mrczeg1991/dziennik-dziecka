@@ -805,13 +805,13 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [ ] 2.1 `npm run test:db` runs and `00_helper_sanity.sql` passes all four assertions
-- [ ] 2.2 Removing the role switch from the helper makes assertion 2 fail
-- [ ] 2.3 `pg_prove` discovers the intended files and does not collect `helpers.inc` as a test
+- [x] 2.1 `npm run test:db` runs and `00_helper_sanity.sql` passes all four assertions
+- [x] 2.2 Removing the role switch from the helper makes assertion 2 fail
+- [x] 2.3 `pg_prove` discovers the intended files and does not collect `helpers.inc` as a test
 
 #### Manual
 
-- [ ] 2.4 Fixture rows are absent after the run, confirming per-file rollback
+- [x] 2.4 Fixture rows are absent after the run, confirming per-file rollback
 
 ### Phase 3: Risk #1 — exposure at the policy layer
 
