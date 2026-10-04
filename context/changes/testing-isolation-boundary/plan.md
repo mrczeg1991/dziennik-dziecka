@@ -832,14 +832,14 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [x] 4.1 `npm run test:db` passes with all four files green
-- [x] 4.2 Adding a permissive `for delete` policy fails the destruction assertion
-- [x] 4.3 The delete assertion passes with no exception handling, confirming no error is raised
+- [x] 4.1 `npm run test:db` passes with all four files green — 845c031
+- [x] 4.2 Adding a permissive `for delete` policy fails the destruction assertion — 845c031
+- [x] 4.3 The delete assertion passes with no exception handling, confirming no error is raised — 845c031
 
 #### Manual
 
-- [x] 4.4 The grant-versus-policy comment block is accurate enough to prevent a future `throws_ok`
-- [x] 4.5 Column-posture assertions are labelled as characterization with the Fix B trigger named
+- [x] 4.4 The grant-versus-policy comment block is accurate enough to prevent a future `throws_ok` — 845c031
+- [x] 4.5 Column-posture assertions are labelled as characterization with the Fix B trigger named — 845c031
 
 ### Phase 5: Make it a gate
 
