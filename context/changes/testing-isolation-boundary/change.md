@@ -290,3 +290,91 @@ generates it and lint returns clean. Run it first in any worktree; do not read
 those 25 errors as a regression. Also note `npx prettier` is slow on first
 invocation in a worktree (cold resolution) — it can exceed a 120s timeout
 without anything being wrong.
+
+### Phase 3 — Risk #1 at the policy layer (2026-10-04)
+
+`01_notes_isolation.sql` (12 assertions) and `02_notes_characterization.sql`
+(2 assertions). Suite total: 3 files, 18 tests, green.
+
+#### Assertion-to-mutation traceability (manual item 3.6)
+
+Every row of the widening table at `research.md:285-299` is covered, and every
+assertion names a mutation it catches. No row uncovered, no assertion without a
+named cause:
+
+| #     | Assertion                                       | Mutation it catches                             | Walk blind?           |
+| ----- | ----------------------------------------------- | ----------------------------------------------- | --------------------- |
+| 1     | B cannot select A's note                        | `notes_select_own` → `using (true)`             | yes                   |
+| 2     | B cannot insert carrying A's `user_id`          | `user_id` half of `notes_insert_own`            | —                     |
+| 3     | B cannot insert against A's `child_id`          | child-ownership `exists` off `notes_insert_own` | **yes, structurally** |
+| 4     | B's update of A's note → 0 rows                 | `notes_update_own`'s `using` widened            | only incidentally     |
+| 5     | B cannot move own note to A's child             | `exists` off `notes_update_own`'s `with check`  | yes                   |
+| 6     | B cannot select A's child row                   | `children_select_own` → `using (true)`          | no (caught)           |
+| 7     | `clear_authentication` returns to postgres      | the helper's other half                         | n/a                   |
+| 8     | owner's `children` update → 0 rows              | any permissive `children` update policy         | yes                   |
+| 9-10  | owner's `children` delete → 0 rows, row present | any permissive `children` delete policy         | yes                   |
+| 11-12 | `table_privs_are` × 2                           | any grant added or revoked                      | yes                   |
+
+#### The two error shapes are not interchangeable
+
+This is the single most important thing in the file for whoever writes the next
+policy test. The guard's _kind_ decides the assertion's _shape_:
+
+- **`with check` violation → raises 42501.** Assertions 2, 3 and 5 use
+  `throws_ok`. An INSERT, or an UPDATE whose `using` passes but whose new row
+  fails the check, is rejected with an error.
+- **`using` non-match or absent policy → zero rows, no error.** Assertions 4, 8,
+  9 use a `with ... returning 1` CTE and count the returned rows. The row is
+  filtered out of the statement's scope; nothing is raised.
+
+Asserting the wrong one of the two fails against a correct database. Assertion 5
+is the subtle case: it looks like assertion 4 (both are B touching an UPDATE) but
+`using` passes there, so it raises rather than affecting zero rows.
+
+#### Mutation checks: applied live, not via `db reset`
+
+**Adapted from the plan.** The plan called for scratch copies of the migration
+plus `supabase db reset`. A reset wipes the database the S-05 worktree shares, so
+each mutation was applied live with `alter policy` / `create policy` and reverted,
+reaching the same policy without disrupting the other window.
+
+| Gate | Mutation                                                          | Result                                                                                      |
+| ---- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 3.2  | `alter policy notes_select_own ... using (true)`                  | `01_` assertion 1 red, naming cross-account select; `00_` assertion 4 also red (consistent) |
+| 3.3  | `alter policy notes_insert_own ... with check (uid = user_id)`    | `01_` assertion 3 red — **and only it**                                                     |
+| 3.5  | `create policy children_update_probe ... for update using (true)` | `01_` assertion 8 red, `have: 1 want: 0`                                                    |
+
+Each revert was verified against `pg_policies`, not assumed: the `qual` and
+`with_check` expressions came back byte-identical to what was captured before the
+mutation, and the surface is back to exactly the five original policies. Gate 3.4
+(`npm run smoke`, all steps passed) is the end-to-end confirmation of that.
+
+#### `clear_authentication` now has a test — Phase 2's open item is closed
+
+Resolved as assertion 7 of `01_notes_isolation.sql`, which is also where the file
+genuinely needs the function: the `children` update/delete assertions must run
+under the **owner's own** session, so the file has to come back out of B's session
+to switch into A's. The Phase 6 §6.1 rule "any new helper function needs a test"
+is satisfied without a fifth assertion in `00_`, which gate 2.1 fixes at four.
+
+#### Fixture-scoped counts proved necessary, not theoretical
+
+Gate 3.4's smoke walk leaves two auth users, one child and two notes behind per
+run (no cleanup). The pgTAP suite was re-run **after** the smoke walk and stayed
+green — because every count in every file is scoped to a fixture id. A bare
+`count(*)` anywhere would have started failing at this exact point.
+
+#### Running the smoke walk from a worktree: three traps
+
+1. **`.env` / `.dev.vars` are gitignored**, so a fresh worktree has neither.
+   Reconstruct them the way `ci.yml:43-47` does; `.env.example` already carries
+   the correct local values.
+2. **`astro dev` is now a daemon and refuses a second instance.** In this
+   worktree it reported an existing server (pid 25744, port 4322, uptime 2681s)
+   that predated the worktree — i.e. another window's. Running `npm run smoke`
+   against the default `BASE_URL=:4321` would have tested someone else's build.
+   Do not `astro dev stop` to clear it; that kills the other window's server.
+3. **Use the CI path instead**: `npm run build`, then
+   `npm run preview -- --port <free>`, then `BASE_URL=http://localhost:<free>
+npm run smoke`. No daemon, and it is what CI actually verifies. Stop it
+   afterwards with `astro preview stop`.

@@ -805,28 +805,28 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [x] 2.1 `npm run test:db` runs and `00_helper_sanity.sql` passes all four assertions
-- [x] 2.2 Removing the role switch from the helper makes assertion 2 fail
-- [x] 2.3 `pg_prove` discovers the intended files and does not collect `helpers.inc` as a test
+- [x] 2.1 `npm run test:db` runs and `00_helper_sanity.sql` passes all four assertions — a4a0f67
+- [x] 2.2 Removing the role switch from the helper makes assertion 2 fail — a4a0f67
+- [x] 2.3 `pg_prove` discovers the intended files and does not collect `helpers.inc` as a test — a4a0f67
 
 #### Manual
 
-- [x] 2.4 Fixture rows are absent after the run, confirming per-file rollback
+- [x] 2.4 Fixture rows are absent after the run, confirming per-file rollback — a4a0f67
 
 ### Phase 3: Risk #1 — exposure at the policy layer
 
 #### Automated
 
-- [ ] 3.1 `npm run test:db` passes with all three files green
-- [ ] 3.2 Widening `notes_select_own` to `using (true)` fails the cross-account select assertion
-- [ ] 3.3 Removing the child-ownership `exists` from `notes_insert_own` fails the foreign-`child_id` insert assertion
-- [ ] 3.4 `npm run smoke` still passes against the relocated local stack
-- [ ] 3.5 Adding a permissive `children` update policy fails the zero-rows `children` update assertion
+- [x] 3.1 `npm run test:db` passes with all three files green
+- [x] 3.2 Widening `notes_select_own` to `using (true)` fails the cross-account select assertion
+- [x] 3.3 Removing the child-ownership `exists` from `notes_insert_own` fails the foreign-`child_id` insert assertion
+- [x] 3.4 `npm run smoke` still passes against the relocated local stack
+- [x] 3.5 Adding a permissive `children` update policy fails the zero-rows `children` update assertion
 
 #### Manual
 
-- [ ] 3.6 Every assertion traces to one row of the widening table, with no row uncovered
-- [ ] 3.7 The characterization file reads as current behaviour, not as a guarantee
+- [x] 3.6 Every assertion traces to one row of the widening table, with no row uncovered
+- [x] 3.7 The characterization file reads as current behaviour, not as a guarantee
 
 ### Phase 4: Risk #4 — destruction and column scope
 
