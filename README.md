@@ -1,8 +1,8 @@
-# 10x Astro Starter
+# Dziennik dziecka
 
-![](./public/template.png)
+Prywatny dziennik rodzica: krótkie, swobodne notatki o dziecku — pomiary, objawy, pierwsze razy — zapisywane w chwili, gdy się dzieją, i odnajdywane wtedy, gdy są potrzebne (na przykład przed wizytą u lekarza).
 
-A modern, opinionated starter template for building fast, accessible web applications.
+Jedno konto, dostęp wyłącznie dla zalogowanego rodzica. Interfejs jest po polsku; dokumentacja techniczna poniżej po angielsku.
 
 ## Tech Stack
 
@@ -23,8 +23,8 @@ A modern, opinionated starter template for building fast, accessible web applica
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+git clone https://github.com/mrczeg1991/dziennik-dziecka.git
+cd dziennik-dziecka
 ```
 
 2. Install dependencies:
@@ -66,18 +66,22 @@ npm run dev
 │ ├── pages/ # Astro pages
 │ │ └── api/ # API endpoints
 │ ├── components/ # UI components (Astro & React)
-│ └── assets/ # Static assets
+│ ├── lib/ # Data access and shared helpers
+│ └── styles/ # Global stylesheet
 ├── public/ # Public assets
+├── supabase/ # Local Supabase config and migrations
+├── scripts/ # Smoke test
+├── context/ # Product docs, plans and change history
 ├── wrangler.jsonc # Cloudflare Workers config
 ```
 
 ## Supabase Configuration
 
-This project uses [Supabase](https://supabase.com/) for authentication. Environment variables are declared via Astro's `astro:env` schema and are treated as **server-only secrets** — they are never exposed to the client.
+This project uses [Supabase](https://supabase.com/) for authentication and storage. Environment variables are declared via Astro's `astro:env` schema and are treated as **server-only secrets** — they are never exposed to the client.
 
 ### First-time setup (local, no cloud project needed)
 
-Requires [Docker](https://www.docker.com/) and ~7 GB RAM.
+Requires [Docker](https://www.docker.com/) and ~7 GB RAM. The `supabase/` folder is already checked in, so there is no `supabase init` step.
 
 1. Create your `.env` file:
 
@@ -85,26 +89,20 @@ Requires [Docker](https://www.docker.com/) and ~7 GB RAM.
 cp .env.example .env
 ```
 
-2. Initialize the local Supabase project (creates a `supabase/` config folder):
-
-```bash
-npx supabase init
-```
-
-3. Start the local stack (downloads Docker images on first run):
+2. Start the local stack (downloads Docker images on first run, then applies every migration in `supabase/migrations/`):
 
 ```bash
 npx supabase start
 ```
 
-4. Copy the credentials printed by the CLI into your `.env` and `.dev.vars`:
+3. Copy the credentials printed by the CLI into your `.env` and `.dev.vars`:
 
 ```
 SUPABASE_URL=http://127.0.0.1:54321
 SUPABASE_KEY=<anon key from CLI output>
 ```
 
-5. To stop the stack when done:
+4. To stop the stack when done:
 
 ```bash
 npx supabase stop
@@ -112,7 +110,7 @@ npx supabase stop
 
 The local Studio UI is available at `http://localhost:54323`.
 
-The database schema lives in `supabase/migrations/`. `npx supabase start` applies every migration to the local stack on first boot; run `npx supabase db reset` to re-apply them from scratch after pulling new ones.
+The database schema lives in `supabase/migrations/`. Run `npx supabase db reset` to re-apply every migration from scratch after pulling new ones.
 
 ### Using a cloud Supabase project instead
 
@@ -128,24 +126,20 @@ SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_KEY=<anon-key>
 ```
 
-### Email confirmation in local development
+### Email confirmation
 
-By default Supabase requires email confirmation before a user can sign in. To skip this during local development:
-
-1. Open the Supabase dashboard for your project
-2. Go to **Authentication → Email → Confirm email**
-3. Toggle it **off**
-
-Users can then sign in immediately after sign-up without clicking a confirmation link.
+Locally, email confirmation is already off — `supabase/config.toml` sets `enable_confirmations = false`, so an account can sign in immediately after sign-up. On a cloud project the setting lives under **Authentication → Email → Confirm email** in the dashboard.
 
 ### Auth routes
 
 | Route                 | Description                                                             |
 | --------------------- | ----------------------------------------------------------------------- |
+| `/`                   | Landing page for signed-out visitors; redirects to `/dashboard` when signed in |
 | `/auth/signin`        | Email/password sign-in form                                             |
 | `/auth/signup`        | Email/password sign-up form                                             |
-| `/auth/confirm-email` | Post-signup "check your inbox" page                                     |
-| `/dashboard`          | Example protected page (redirects to `/auth/signin` if unauthenticated) |
+| `/auth/confirm-email` | Post-signup confirmation page                                           |
+| `/dashboard`          | The parent's children (redirects to `/auth/signin` if unauthenticated)  |
+| `/children/[id]`      | One child's notes (protected)                                           |
 
 Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
 
@@ -169,7 +163,7 @@ Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or
 
 ## Smoke test
 
-`scripts/smoke.mjs` is a dependency-free Node script that walks the whole auth flow (sign-up, sign-in, protected page, sign-out) over HTTP. Run it against the dev server or the production preview after dependency upgrades:
+`scripts/smoke.mjs` is a dependency-free Node script that walks the whole flow (sign-up, sign-in, children, notes, cross-account isolation, sign-out) over HTTP. Run it against the dev server or the production preview:
 
 ```bash
 npm run dev            # or: npm run build && npm run preview
@@ -178,7 +172,7 @@ BASE_URL=http://localhost:4321 npm run smoke
 
 It needs a reachable Supabase instance (local or cloud) with email confirmation disabled.
 
-> **Note:** this script exists primarily to guard the development of the starter itself — it is a fast sanity check that dependency upgrades did not break the build, the Cloudflare adapter or the Supabase auth flow. It is **not** a substitute for a real test suite. Once you build your own product on top of this starter, add proper tests (unit, integration, end-to-end) suited to your application.
+> **Note:** the smoke script asserts status codes and redirect targets, not page copy. It is a fast check that a change did not break the build, the Cloudflare adapter or the auth and data flow — **not** a substitute for a real test suite. The testing strategy lives in `context/foundation/test-plan.md`.
 
 ## CI
 

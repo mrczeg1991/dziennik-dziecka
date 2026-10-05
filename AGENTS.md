@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-10x Astro Starter: an Astro 7 + React 19 (islands) app in TypeScript, styled with Tailwind 4 and shadcn/ui, using Supabase for auth and deploying to Cloudflare Workers via Wrangler.
+Dziennik dziecka: a parent's private notes about their children — an Astro 7 + React 19 (islands) app in TypeScript, styled with Tailwind 4 and shadcn/ui, using Supabase for auth and data, and deploying to Cloudflare Workers via Wrangler. UI copy is Polish.
 
 ## Hard Rules
 

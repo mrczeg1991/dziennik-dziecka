@@ -23,7 +23,7 @@ export const POST: APIRoute = async (context) => {
 
   const supabase = createClient(context.request.headers, context.cookies);
   if (!supabase) {
-    return toDashboard("Supabase is not configured");
+    return toDashboard("Aplikacja nie jest poprawnie skonfigurowana");
   }
 
   const form = await context.request.formData();
