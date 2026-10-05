@@ -368,7 +368,7 @@ is the prose line in `context/foundation/roadmap.md:60`.
 
 #### 3. Template screenshot and README
 
-**Files**: `public/template.png`, `README.md`
+**Files**: `public/template.png`, `README.md`, `AGENTS.md`
 
 **Intent**: `template.png` is the starter's own screenshot, referenced only by the README
 line that embeds it. The README presents the repository as the 10x Astro Starter — title,
@@ -385,6 +385,11 @@ stay accurate — verify the commands they list still match `package.json`. `:18
 describes a script guarding "the development of the starter itself", is reworded or dropped
 to match what the script actually does in this repository.
 
+`AGENTS.md:3` was added to this change mid-phase: its opening sentence declared the
+repository to be "10x Astro Starter", which is false and misleads any agent reading it
+first. It now names Dziennik dziecka. This went beyond the agreed "user-visible plus
+README" scope by explicit decision, after gate 3.5 surfaced it.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -393,7 +398,7 @@ to match what the script actually does in this repository.
 - Type and template checking passes: `npx astro check`
 - Production build succeeds: `npm run build`
 - Smoke walk passes: `npm run smoke`
-- `git grep -n -i "10x.astro.starter\|przeprogramowani\|template\.png\|libbadge" -- . ':!package-lock.json' ':!context/' ':!.claude/'` returns hits only in `package.json:2` and `supabase/config.toml:5`, both deliberately out of scope
+- `git grep -n -i "10x.astro.starter\|przeprogramowani\|template\.png\|libbadge" -- . ':!package-lock.json' ':!context/' ':!.claude/' ':!CLAUDE.md'` returns hits only in `package.json:2` and `supabase/config.toml:5`, both deliberately out of scope. `CLAUDE.md` is excluded because its only matches are the `<!-- BEGIN/END @przeprogramowani/10x-cli -->` markers delimiting a CLI-managed block — a tool name, not starter branding, and removing them would break that block
 
 #### Manual Verification:
 
@@ -497,34 +502,34 @@ updating. That is a future change's problem, not this one's.
 
 #### Automated
 
-- [x] 2.1 Linting passes: `npm run lint`
-- [x] 2.2 Type and template checking passes: `npx astro check`
-- [x] 2.3 Production build succeeds: `npm run build`
-- [x] 2.4 Smoke walk passes unchanged, including the sign-in redirect to `/dashboard` and the sign-out redirect to `/`: `npm run smoke`
-- [x] 2.5 `git grep -n "Sign in\|Sign up\|Signing in\|Creating account\|Show password\|Hide password" -- src/` returns no hits
-- [x] 2.11 `git grep -n "Supabase is not configured" -- src/` returns no hits
+- [x] 2.1 Linting passes: `npm run lint` — 04a0ff9
+- [x] 2.2 Type and template checking passes: `npx astro check` — 04a0ff9
+- [x] 2.3 Production build succeeds: `npm run build` — 04a0ff9
+- [x] 2.4 Smoke walk passes unchanged, including the sign-in redirect to `/dashboard` and the sign-out redirect to `/`: `npm run smoke` — 04a0ff9
+- [x] 2.5 `git grep -n "Sign in\|Sign up\|Signing in\|Creating account\|Show password\|Hide password" -- src/` returns no hits — 04a0ff9
+- [x] 2.11 `git grep -n "Supabase is not configured" -- src/` returns no hits — 04a0ff9
 
 #### Manual
 
-- [x] 2.6 `/auth/signin` and `/auth/signup` are fully Polish, including tab titles, and the links between them work
-- [x] 2.7 Submitting each form empty shows Polish validation messages
-- [x] 2.8 Registering a new account lands on a Polish confirm-email page, and its link returns to sign-in
-- [x] 2.9 The password eye toggle still shows and hides the password
-- [x] 2.10 Signing in with correct credentials still reaches `/dashboard`
-- [x] 2.12 Signing in with a wrong password shows a Polish message, not Supabase's English text
+- [x] 2.6 `/auth/signin` and `/auth/signup` are fully Polish, including tab titles, and the links between them work — 04a0ff9
+- [x] 2.7 Submitting each form empty shows Polish validation messages — 04a0ff9
+- [x] 2.8 Registering a new account lands on a Polish confirm-email page, and its link returns to sign-in — 04a0ff9
+- [x] 2.9 The password eye toggle still shows and hides the password — 04a0ff9
+- [x] 2.10 Signing in with correct credentials still reaches `/dashboard` — 04a0ff9
+- [x] 2.12 Signing in with a wrong password shows a Polish message, not Supabase's English text — 04a0ff9
 
 ### Phase 3: Remove the remaining starter traces
 
 #### Automated
 
-- [ ] 3.1 Linting passes: `npm run lint`
-- [ ] 3.2 Type and template checking passes: `npx astro check`
-- [ ] 3.3 Production build succeeds: `npm run build`
-- [ ] 3.4 Smoke walk passes: `npm run smoke`
-- [ ] 3.5 `git grep -n -i "10x.astro.starter\|przeprogramowani\|template\.png\|libbadge" -- . ':!package-lock.json' ':!context/' ':!.claude/'` returns hits only in `package.json:2` and `supabase/config.toml:5`, both deliberately out of scope
+- [x] 3.1 Linting passes: `npm run lint`
+- [x] 3.2 Type and template checking passes: `npx astro check`
+- [x] 3.3 Production build succeeds: `npm run build`
+- [x] 3.4 Smoke walk passes: `npm run smoke`
+- [x] 3.5 `git grep -n -i "10x.astro.starter\|przeprogramowani\|template\.png\|libbadge" -- . ':!package-lock.json' ':!context/' ':!.claude/' ':!CLAUDE.md'` returns hits only in `package.json:2` and `supabase/config.toml:5`, both deliberately out of scope. `CLAUDE.md` is excluded because its only matches are the `<!-- BEGIN/END @przeprogramowani/10x-cli -->` markers delimiting a CLI-managed block — a tool name, not starter branding, and removing them would break that block
 
 #### Manual
 
-- [ ] 3.6 With `SUPABASE_URL` unset, the config banner renders in Polish with no link to any GitHub repository
-- [ ] 3.7 README reads as the product's documentation and renders no broken image on GitHub
-- [ ] 3.8 Nothing in the app changed visually compared with the end of Phase 2
+- [x] 3.6 With `SUPABASE_URL` unset, the config banner renders in Polish with no link to any GitHub repository
+- [x] 3.7 README reads as the product's documentation and renders no broken image on GitHub
+- [x] 3.8 Nothing in the app changed visually compared with the end of Phase 2
