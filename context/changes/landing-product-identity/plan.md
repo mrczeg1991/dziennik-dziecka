@@ -212,7 +212,10 @@ before proceeding to the next phase. Phase blocks use plain bullets — the corr
 ### Overview
 
 Translate every screen a parent walks through to get into the app: the two form pages, the
-page registration lands on, and the two React forms with their validation messages.
+page registration lands on, and the two React forms with their validation messages. Extended
+mid-phase to also replace Supabase's English auth error text and the five
+`"Supabase is not configured"` literals with Polish — see change #6 and the reversed bullet
+in "What We're NOT Doing".
 
 ### Changes Required:
 
@@ -274,6 +277,16 @@ adres email`, `:32` `Hasło jest wymagane`, `:34` `Hasło musi mieć co najmniej
 restated in a form that needs no plural branching — phrase it as a count of remaining
 characters rather than an English-style singular/plural pair.
 
+#### 5. Password visibility toggle
+
+**File**: `src/components/auth/PasswordToggle.tsx`
+
+**Intent**: Translate the accessible name. It is not visible text, but a screen reader
+announces it, and this component is used only by the two auth forms.
+
+**Contract**: `:14` — the `aria-label` ternary becomes `Ukryj hasło` / `Pokaż hasło`. The
+`visible` prop and the icon swap are unchanged.
+
 #### 6. Polish auth error text and config messages
 
 **File**: `src/lib/auth-errors.ts` (new), `src/pages/api/auth/signin.ts`,
@@ -293,16 +306,6 @@ the caller's `fallback`, so no English escapes. `api/auth/signin.ts` and
 and "Nie udało się założyć konta. Spróbuj ponownie." respectively. All five
 `"Supabase is not configured"` literals become `"Aplikacja nie jest poprawnie skonfigurowana"`.
 The `?error=` redirect shape and every success redirect are unchanged.
-
-#### 5. Password visibility toggle
-
-**File**: `src/components/auth/PasswordToggle.tsx`
-
-**Intent**: Translate the accessible name. It is not visible text, but a screen reader
-announces it, and this component is used only by the two auth forms.
-
-**Contract**: `:14` — the `aria-label` ternary becomes `Ukryj hasło` / `Pokaż hasło`. The
-`visible` prop and the icon swap are unchanged.
 
 ### Success Criteria:
 
@@ -336,7 +339,8 @@ before proceeding to the next phase.
 
 Clear what is left: the template's repo link in the config banner, the one genuinely
 unreferenced component, the template screenshot, and the README that still presents the
-repository as the starter.
+repository as the starter. Extended mid-phase to also correct `AGENTS.md:3`, which still
+declared the repository to be the starter — see change #3.
 
 ### Changes Required:
 
