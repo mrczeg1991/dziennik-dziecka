@@ -3,7 +3,7 @@ project: Dziennik dziecka
 version: 3
 status: draft
 created: 2026-09-22
-updated: 2026-10-04
+updated: 2026-10-05
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -50,7 +50,7 @@ Rodzic dwójki dzieci nie pamięta drobnych faktów o nich — pomiarów, objaw�
 | ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------- | -------- | ----- |
 | S-03 | note-search-by-meaning  | rodzic pyta na stronie dziecka własnymi słowami i dostaje jego pasujące notatki z datami i linkami do źródła      | S-02          | FR-006, §Business Logic, §Success Criteria, §Non-Functional Requirements, §Non-Goals     | ready    | —     |
 | S-04 | note-search-precision   | rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę, a nie tylko podobne znaczeniowo                       | S-03          | FR-006, §Business Logic                                                                 | proposed | —     |
-| S-05 | landing-product-identity | rodzic wchodzący na stronę widzi, że to Dziennik dziecka, i loguje się po polsku — bez śladu szablonu startowego  | —             | MS-01, §Access Control (ekran logowania)                                                | in-progress | —     |
+| S-05 | landing-product-identity | rodzic wchodzący na stronę widzi, że to Dziennik dziecka, i loguje się po polsku — bez śladu szablonu startowego  | —             | MS-01, §Access Control (ekran logowania)                                                | done        | —     |
 
 ## Baseline
 
@@ -111,7 +111,7 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
 - **Unknowns:**
   - Jaka treść ma stanąć na stronie wejściowej w miejsce kart o szablonie — jedno zdanie o produkcie i wejście do logowania, czy więcej? Opis produktu z PRD (§Vision) wystarcza jako materiał; to decyzja o długości, nie o treści. — Owner: user. Block: no (do rozstrzygnięcia w planie).
 - **Risk:** Najmniejszy kawałek M-2 i jedyny, który nie dotyka danych — żadnej migracji, żadnego punktu wejścia, żadnego dostępu do notatek, więc i żadnego ryzyka dla drugiej zasady ochronnej PRD („notatki dziecka widzi tylko zalogowane konto"). Brak zależności pozwala puścić go równolegle do S-03, więc nie wydłuża drogi do gwiazdy przewodniej. Dwie pułapki. Pierwsza: kosmiczny motyw wizualny szablonu (ciemne tło, świetlne kule, pole gwiazd) zostaje w tym kawałku świadomie — ekran przestanie *mówić* „szablon startowy", ale nadal będzie tak *wyglądał*; jeśli to zacznie przeszkadzać, jest to osobna sprawa wizualna, nie rozszerzenie tego kawałka. Druga: usunięcie pliku jako nieużywanego idzie po sprawdzeniu, że faktycznie nikt go nie importuje — pomyłka tutaj psuje działający ekran, zamiast sprzątnąć śmieć.
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -148,3 +148,4 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
 
 - **S-01: rodzic po założeniu konta i zalogowaniu dodaje profil dziecka i widzi listę swoich dzieci (zamiast pustego dashboardu ze startera).** — Archived 2026-09-24 → `context/archive/2026-09-23-child-profiles/`. Lesson: —.
 - **S-02: rodzic zapisuje dowolną notatkę tekstową o wybranym dziecku z datą/godziną i od razu widzi ją na liście notatek tego dziecka; notatka przetrwa wylogowanie i ponowne zalogowanie.** — Archived 2026-10-01 → `context/archive/2026-09-26-first-child-note/`. Lesson: —.
+- **S-05: rodzic, który wchodzi na stronę główną albo wprost na logowanie, widzi treść o Dzienniku dziecka — czym produkt jest i do czego służy — a nie opis szablonu startowego ani jego trzech cech technicznych. Tytuł karty przeglądarki nazywa produkt. Logowanie i rejestracja są po polsku. W repozytorium nie zostaje nieużywany plik ani odnośnik, który istnieje tylko dlatego, że projekt postawiono na szablonie.** — Archived 2026-10-05 → `context/archive/2026-10-04-landing-product-identity/`. Lesson: —.
