@@ -522,14 +522,14 @@ updating. That is a future change's problem, not this one's.
 
 #### Automated
 
-- [x] 3.1 Linting passes: `npm run lint`
-- [x] 3.2 Type and template checking passes: `npx astro check`
-- [x] 3.3 Production build succeeds: `npm run build`
-- [x] 3.4 Smoke walk passes: `npm run smoke`
-- [x] 3.5 `git grep -n -i "10x.astro.starter\|przeprogramowani\|template\.png\|libbadge" -- . ':!package-lock.json' ':!context/' ':!.claude/' ':!CLAUDE.md'` returns hits only in `package.json:2` and `supabase/config.toml:5`, both deliberately out of scope. `CLAUDE.md` is excluded because its only matches are the `<!-- BEGIN/END @przeprogramowani/10x-cli -->` markers delimiting a CLI-managed block — a tool name, not starter branding, and removing them would break that block
+- [x] 3.1 Linting passes: `npm run lint` — 51374ca
+- [x] 3.2 Type and template checking passes: `npx astro check` — 51374ca
+- [x] 3.3 Production build succeeds: `npm run build` — 51374ca
+- [x] 3.4 Smoke walk passes: `npm run smoke` — 51374ca
+- [x] 3.5 `git grep -n -i "10x.astro.starter\|przeprogramowani\|template\.png\|libbadge" -- . ':!package-lock.json' ':!context/' ':!.claude/' ':!CLAUDE.md'` returns hits only in `package.json:2` and `supabase/config.toml:5`, both deliberately out of scope. `CLAUDE.md` is excluded because its only matches are the `<!-- BEGIN/END @przeprogramowani/10x-cli -->` markers delimiting a CLI-managed block — a tool name, not starter branding, and removing them would break that block — 51374ca
 
 #### Manual
 
-- [x] 3.6 With `SUPABASE_URL` unset, the config banner renders in Polish with no link to any GitHub repository
-- [x] 3.7 README reads as the product's documentation and renders no broken image on GitHub
-- [x] 3.8 Nothing in the app changed visually compared with the end of Phase 2
+- [x] 3.6 With `SUPABASE_URL` unset, the config banner renders in Polish with no link to any GitHub repository — 51374ca
+- [x] 3.7 README reads as the product's documentation and renders no broken image on GitHub — 51374ca
+- [x] 3.8 Nothing in the app changed visually compared with the end of Phase 2 — 51374ca
