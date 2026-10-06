@@ -34,12 +34,17 @@ jobs:
           cache: npm
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
       - run: npm ci
       - name: Start local Supabase
         run: |
           supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
           supabase status -o env | grep -E '^(API_URL|ANON_KEY)=' > supabase.env
+      # Position is load-bearing: the database is migrated and holds zero rows
+      # only here. After the smoke walk below it holds whatever that walk left
+      # behind — scripts/smoke.mjs performs no cleanup.
+      - name: Run database policy tests
+        run: supabase test db
       - name: Configure secrets for build and preview
         run: |
           source supabase.env

@@ -3,7 +3,7 @@ change_id: testing-isolation-boundary
 title: Testing isolation boundary
 status: implementing
 created: 2026-10-03
-updated: 2026-10-04
+updated: 2026-10-06
 archived_at: null
 ---
 

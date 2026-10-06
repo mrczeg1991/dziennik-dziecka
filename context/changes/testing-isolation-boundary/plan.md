@@ -845,7 +845,7 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [ ] 5.6 `ci.yml` parses and the new step sits at the intended position
+- [x] 5.6 `ci.yml` parses and the new step sits at the intended position
 
 #### Manual
 
