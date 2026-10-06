@@ -11,7 +11,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "smoke": "node scripts/smoke.mjs",
-    "test:db": "supabase test db"
+    "test:db": "supabase test db",
+    "prepare": "husky"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

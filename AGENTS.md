@@ -29,7 +29,8 @@ Dziennik dziecka: a parent's private notes about their children — an Astro 7 +
 
 - Formatting/lint are enforced by `@.prettierrc.json` and `@eslint.config.js`: 2-space indent, double quotes, semicolons, 120-char lines, trailing commas.
 - Unused args/vars/caught errors must be prefixed `_` (`@typescript-eslint/no-unused-vars`).
-- `@.husky/pre-commit` runs `lint-staged`: staged `.ts/.tsx/.astro` get `eslint --fix`, `.json/.css/.md` get `prettier --write`.
+- `@.husky/pre-commit` runs `lint-staged`: staged `.ts/.tsx/.astro` get `eslint --fix`, `.json/.css/.md` get `prettier --write`. Hooks are wired by the `prepare` script on `npm install`/`npm ci`; run `npm run prepare` if `git config core.hooksPath` is unset.
+- `@.prettierignore` exempts `context/` and `.claude/`, so the hook does **not** reformat those Markdown files — `context/changes/*/plan.md` has a `## Progress` section whose Phase blocks the 10xDevs skill chain treats as read-only.
 
 ## Testing Guidelines
 

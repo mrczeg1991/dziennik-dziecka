@@ -1,0 +1,10 @@
+# The 10x workflow's own documents. `context/changes/<id>/plan.md` carries a
+# `## Progress` section that /10x-implement treats as the single source of truth
+# and its Phase blocks as read-only — a `prettier --write` from the pre-commit
+# hook would rewrite them. Foundation docs are hand-wrapped prose; reformatting
+# them produces large mechanical diffs that bury substantive edits.
+context/
+
+# Tool-managed: skill definitions and the CLI manifest are written by the
+# 10xDevs skill chain, not by hand.
+.claude/
