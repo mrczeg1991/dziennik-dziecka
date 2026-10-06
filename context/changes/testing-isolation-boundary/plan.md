@@ -859,9 +859,9 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [ ] 6.1 `npx prettier --check` passes on each edited Markdown file
-- [x] 6.2 §6.1 of `test-plan.md` no longer contains a `TBD` placeholder
-- [x] 6.3 `git status` shows no modified file under `context/archive/`
+- [x] 6.1 `npx prettier --check` passes on each edited Markdown file — b8767cb (`AGENTS.md` + `test-plan.md`; `plan.md` excluded — prettier would rewrite its read-only Phase blocks)
+- [x] 6.2 §6.1 of `test-plan.md` no longer contains a `TBD` placeholder — eabb168
+- [x] 6.3 `git status` shows no modified file under `context/archive/` — eabb168
 
 #### Manual
 
