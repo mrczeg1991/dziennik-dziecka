@@ -845,7 +845,7 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Automated
 
-- [x] 5.6 `ci.yml` parses and the new step sits at the intended position
+- [x] 5.6 `ci.yml` parses and the new step sits at the intended position — fa0de8b
 
 #### Manual
 
@@ -860,8 +860,8 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 #### Automated
 
 - [ ] 6.1 `npx prettier --check` passes on each edited Markdown file
-- [ ] 6.2 §6.1 of `test-plan.md` no longer contains a `TBD` placeholder
-- [ ] 6.3 `git status` shows no modified file under `context/archive/`
+- [x] 6.2 §6.1 of `test-plan.md` no longer contains a `TBD` placeholder
+- [x] 6.3 `git status` shows no modified file under `context/archive/`
 
 #### Manual
 

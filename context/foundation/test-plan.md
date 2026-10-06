@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-10-02
+> Last updated: 2026-10-06
 
 ## 1. Strategy
 
@@ -78,7 +78,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Isolation at the enforcing layer | Prove the database policies — not the handlers — are what keeps one account's and one child's notes from everyone else, and that no privilege exists to destroy a note row | #1, #4 | database policy tests | change opened | `context/changes/testing-isolation-boundary/` |
+| 1 | Isolation at the enforcing layer | Prove the database policies — not the handlers — are what keeps one account's notes from everyone else, and that no `delete` policy exists, so a delete affects no rows | #1, #4 | database policy tests | implementing | `context/changes/testing-isolation-boundary/` |
 | 2 | Gates that actually gate | Make CI fail for the three reasons it currently cannot: hosted schema drifting from deployed code, a gate run that aborted rather than passed, and a data-touching route never added to the guard list | #2, #3, #6, #7 | gates, route-coverage test, build-output assertion | not started | — |
 | 3 | A runner, and the boundaries nothing can reach today | Stand up a test runner, then prove a period-bounded read returns every note inside the window and none outside it, with the boundary resolved in the parent's wall clock — and cover the two read boundaries the policy layer structurally cannot: a parent's own soft-deleted note stays out of their list, and one child's notes stay out of the other child's | #5 (window half), #4 (column half), #1 (soft-delete and cross-child halves) | unit + integration | not started | — |
 | 4 | Search answer completeness | Prove a "how often" or "in July" answer is complete within its range once ranking exists | #5 (ranking half) | integration | not started | — |
@@ -113,7 +113,7 @@ are examples of the category, not endorsements.
 | Layer | Tool | Version | Notes |
 |---|---|---|---|
 | unit + integration | none yet — see §3 Phase 3 | — | Vitest configured through `getViteConfig()` from `astro/config`; a node test environment rather than a browser one is required from Astro 6 onward, and this project is on Astro 7. checked: 2026-10-02 |
-| database policy tests | none yet — see §3 Phase 1 | — | pgTAP through the Supabase CLI: files under `supabase/tests/`, created with `supabase test new`, run with `supabase test db`; `supabase-test-helpers` supplies per-user session switching and policy-enabled assertions. checked: 2026-10-02 |
+| database policy tests | pgTAP via the Supabase CLI | pgTAP 1.3.3, CLI 2.117.0 | Files under `supabase/tests/`, run with `npm run test:db`. Session switching is a hand-rolled helper — `tests.authenticate_as` in `supabase/tests/helpers.inc`, included per file with `\ir`. `supabase-test-helpers` was **not** adopted: it would add an install step in both the local and the CI environment to replace ~20 lines, and a session helper needs a test of its own either way (`00_helper_sanity.sql`). checked: 2026-10-06 |
 | component rendering (`.astro`) | none yet — low priority | — | Astro's container API renders a component to a string outside a build; React islands need their renderer loaded explicitly. Deliberately unscheduled: §7 excludes most of the budget this would serve. checked: 2026-10-02 |
 | end-to-end over HTTP | `scripts/smoke.mjs` (in-repo, zero dependencies) | n/a | 307 lines, roughly 38 assertions, already covering anonymous guards, the full note lifecycle, ordering, and a cross-account isolation sweep. **Keep it; do not replace it.** It is the only thing currently asserting anything. |
 | browser-level e2e | not adopted | — | Promote to a real browser driver only when a test needs hydration or client-side validation an HTTP walk cannot reach. Not yet justified. |
@@ -140,7 +140,7 @@ phase lands; before that, the gate is planned.
 | lint + typecheck | local + CI (`ci` job) | required — wired | syntactic and type drift |
 | build | CI (both jobs) | required — wired | configuration and adapter breakage |
 | end-to-end HTTP walk on critical flows | CI (`smoke` job, against a fresh local database) | required — wired | broken critical user paths, cross-account exposure over HTTP |
-| database policy tests | local + CI | required after §3 Phase 1 | Risk #1, #4 — exposure and destruction at the layer that enforces them |
+| database policy tests | local + CI (`smoke` job) | required — wired | Risk #1, #4 — exposure and destruction at the layer that enforces them |
 | gate-integrity check | CI | required after §3 Phase 2 | Risk #7 — a gate that aborted or matched zero files reported as a pass |
 | route-guard coverage | CI | required after §3 Phase 2 | Risk #2 — a data-touching route never added to the guard list |
 | build-output secret scan | CI | required after §3 Phase 2 | Risk #6 — a secret or note body reaching the client bundle |
@@ -163,8 +163,82 @@ relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.1 Adding a database policy test
 
-- TBD — see §3 Phase 1, for the cross-account and cross-child note-exposure
-  pattern, and for proving an operation has no privilege at all.
+Delivered by §3 Phase 1 (`context/changes/testing-isolation-boundary/`).
+
+**Location and naming.** One subject per file under `supabase/tests/`, named
+`NN_subject.sql`. `00_` is reserved for `00_helper_sanity.sql`, the suite's
+negative control — nothing else belongs at that number. Shared SQL takes the
+`.inc` extension (`helpers.inc`) so `pg_prove` does not collect it as a test:
+discovery is by extension and recursive, so an extension it does not match is the
+only reliable exclusion.
+
+**Run it** with `npm run test:db` (`supabase test db`), against a running local
+stack (`supabase start`). Each file runs in its own transaction and is rolled
+back, so fixtures never survive a file, let alone a run.
+
+**Skeleton.** The ordering is load-bearing:
+
+```sql
+begin;
+\ir helpers.inc           -- include-relative: resolved against this file's directory
+select plan(<n>);
+
+-- Fixtures FIRST, before any role switch.
+insert into auth.users (id) values ('00000000-0000-0000-0000-00000000000a');
+insert into public.children (id, user_id, name) values (...);
+insert into public.notes (id, user_id, child_id, content, occurred_at) values (...);
+
+select tests.authenticate_as('00000000-0000-0000-0000-00000000000a');
+-- assertions
+select * from finish();
+rollback;
+```
+
+**Fixtures go in before the switch, always.** They are inserted as the connecting
+role, `postgres` — not a superuser on this image, but it holds `BYPASSRLS`, which
+is the property that matters. Two reasons: `auth.users` is not writable by
+`authenticated`, and the point is usually to read *someone else's* row, which the
+policies would stop you creating under the target role in the first place.
+
+**The minimal `auth.users` insert is `id` alone** — that table's other NOT NULL
+columns carry defaults. `public.children` needs `name` (not `first_name`);
+`public.notes` needs `occurred_at` (NOT NULL, no default).
+
+**`tests.authenticate_as(uuid)` sets the claim AND the role**, because the two fail
+differently and both failures are silent: role without claim leaves `auth.uid()`
+null, so `notes_select_own` matches nothing and every "cannot see B's row"
+assertion passes for the wrong reason; claim without role leaves the session
+bypassing row security, so no policy is exercised at all.
+`tests.clear_authentication()` returns to the connecting identity when a file needs
+to set up a second user's fixtures mid-test.
+
+**Scope every count to a fixture id.** A bare `count(*) from public.notes` reads
+whatever earlier `npm run smoke` runs left behind — the smoke walk performs no
+cleanup — so it would pass or fail by accident. CI sees an empty database; a
+developer's machine does not.
+
+**Reference file:** `supabase/tests/01_notes_isolation.sql`.
+
+Three rules this rollout phase earned:
+
+1. **Assert the mechanism, not the plain-language guarantee.** For a delete that no
+   policy permits, the correct assertion is *zero rows affected and the row still
+   present* — never `throws_ok`, never a `42501` check. `authenticated` **holds**
+   the DELETE privilege; what is absent is the policy, so the statement runs,
+   matches nothing, and raises nothing. A `throws_ok` there would fail against a
+   correct database. Where the guard is a `with check` violation instead, `42501`
+   *is* the right assertion. The two shapes are not interchangeable.
+2. **A characterization test belongs in a file labelled as such, never beside a
+   guarantee.** In `01_notes_isolation.sql` a red assertion means isolation broke.
+   In `02_notes_characterization.sql` a red assertion means behaviour changed —
+   information, not necessarily a defect, and the response is to decide whether the
+   change was intended, not to "fix" the code back. A file that must mix both
+   (`03_notes_destruction.sql`) labels each half in its header.
+3. **The role switch has its own test, and so does any helper you add.** That is
+   `00_helper_sanity.sql`: it proves the switch took, and that a *positive* read
+   works under the claim, before any denial assertion is trusted. Without it a
+   silently-failing switch leaves every other file green against no policy
+   whatsoever — Risk #7, a gate reporting green having checked nothing.
 
 ### 6.2 Adding a unit test
 
@@ -191,8 +265,29 @@ relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.6 Per-rollout-phase notes
 
-(Empty. After each phase lands, a short note here captures anything
-surprising the rollout phase taught.)
+**§3 Phase 1 — deny-by-default makes removal loud and widening silent.** Every
+prohibition in this schema is an *absent* policy rather than a restrictive one.
+That asymmetry is the whole reason a policy test and an HTTP walk are not
+substitutes for each other: *removing* a policy is loud, because legitimate
+operations start failing and `scripts/smoke.mjs` catches it immediately; *widening*
+one is silent, because the handler filters first and the policy is never the thing
+that fails. Four of the six widenings traced during this phase were invisible to
+the HTTP walk — `notes_select_own → using (true)`, dropping the child-ownership
+`exists` from either `notes_insert_own` or `notes_update_own`, and adding any
+permissive `children` update or delete policy. Each now has a named assertion.
+
+**`F5` — Decision: Fix A, database half deferred.** Recorded in full at
+`context/changes/testing-isolation-boundary/change.md` (§Notes), because
+`AGENTS.md` makes `context/archive/` immutable and the finding's own file cannot be
+updated. In short: Fix A's two proposed smoke assertions are superseded by
+`supabase/tests/03_notes_destruction.sql`, which reaches the mechanism the smoke
+script cannot — asserting a refused `DELETE` needs a direct PostgREST call the
+zero-dependency walk does not make, and pgTAP makes it natively. Fix B
+(column-scoped grants, or a `before update` trigger) stays deferred; its practical
+exposure is nil while `SUPABASE_KEY` is a server-only secret. **Tripwire:**
+assertions 3 and 4 of that file are expected to flip to failures the day Fix B
+lands. That failure is the intended signal that the guarantee moved into Postgres —
+update the file then, do not weaken the hardening to keep it green.
 
 ## 7. What We Deliberately Don't Test
 

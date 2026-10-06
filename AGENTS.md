@@ -23,6 +23,7 @@ Dziennik dziecka: a parent's private notes about their children — an Astro 7 +
 - `npm run build` / `npm run preview` — production build / preview it locally.
 - `npm run lint` / `npm run lint:fix` — ESLint (type-checked rules); `npm run format` — Prettier.
 - `npm run smoke` — run `@scripts/smoke.mjs` against a running server (`BASE_URL`, default `http://localhost:4321`).
+- `npm run test:db` — run the pgTAP policy suite in `supabase/tests/` (needs `supabase start` first).
 
 ## Coding Style & Naming Conventions
 
@@ -32,12 +33,13 @@ Dziennik dziecka: a parent's private notes about their children — an Astro 7 +
 
 ## Testing Guidelines
 
+- Row-security policies are covered by a pgTAP suite in `supabase/tests/`, run with `npm run test:db` and enforced in CI. It is the only layer that tests the policies directly: the HTTP walk cannot see a _widened_ policy, because handlers filter first and the policy is never the thing that fails. Read `@context/foundation/test-plan.md` §6.1 before adding one.
 - No unit/integration suite yet. `scripts/smoke.mjs` walks the full auth flow (sign-up, sign-in, protected page, sign-out) over HTTP — a build sanity check, not a replacement for real tests.
 
 ## Commit & Pull Request Guidelines
 
 - No established commit-message convention yet (single-commit history).
-- PRs to `master` must pass `@.github/workflows/ci.yml`: `ci` runs lint, `astro check`, build; `smoke` boots a local Supabase and runs the smoke test.
+- PRs to `master` must pass `@.github/workflows/ci.yml`: `ci` runs lint, `astro check`, build; `smoke` boots a local Supabase, runs the pgTAP policy suite (`supabase test db`) against the still-empty database, then builds and runs the smoke test.
 
 ## Security & Configuration Tips
 
