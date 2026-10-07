@@ -1,10 +1,10 @@
 ---
 change_id: testing-isolation-boundary
 title: Testing isolation boundary
-status: implemented
+status: archived
 created: 2026-10-03
 updated: 2026-10-07
-archived_at: null
+archived_at: 2026-10-07T21:07:30Z
 ---
 
 ## Notes
