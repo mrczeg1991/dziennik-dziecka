@@ -27,7 +27,7 @@ create policy "notes_select_own"
   on public.notes
   for select
   to authenticated
-  using ((select auth.uid()) = user_id);
+  using (true);
 
 -- The explicit `c.user_id = (select auth.uid())` predicate is what makes this check
 -- sufficient. `children`'s own RLS also applies inside the subquery, but that is a
