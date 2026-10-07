@@ -448,3 +448,33 @@ nil while `SUPABASE_KEY` is a server-only secret.
 **flip to failures** the day Fix B lands. That failure is the intended signal
 that the guarantee moved into Postgres. Update the file then; do not weaken the
 hardening to keep it green.
+
+### Phase 5 — the gate, verified in CI (2026-10-07)
+
+#### Success run: the step runs where it was placed
+
+Run <https://github.com/mrczeg1991/dziennik-dziecka/actions/runs/37679261140>
+(commit `8154bd5`, trigger: push to `master`). The `smoke` job reports its steps
+in this order, all green:
+
+```
+6  Start local Supabase
+7  Run database policy tests   <- the new step
+8  Configure secrets for build and preview
+```
+
+Step 7 output: `Files=4, Tests=22`, `Result: PASS`. The pinned CLI shows twice in
+the log — `supabase/setup-cli@v1 ... version: 2.117.0` and the CLI's own
+`currently installed v2.117.0` — matching `package-lock.json`. Rows 5.1 and 5.3
+are settled on this run.
+
+**Caveat on 5.1.** The plan's wording is “a pull request to `master`”; this was a
+push to `master`. `ci.yml` triggers on both and the job definition is identical,
+so the step’s behaviour and position are proven, but the pull-request trigger path
+itself has not been exercised.
+
+Note also that before this run the step had **never** executed: `fa0de8b` sat
+unpushed for a day, and `git branch -r --contains fa0de8b` was empty. A gate that
+has not been seen to run is not known to be a gate — which is the whole premise of
+Phase 5 change #3.
+
