@@ -1,9 +1,9 @@
 ---
 change_id: testing-isolation-boundary
 title: Testing isolation boundary
-status: implementing
+status: implemented
 created: 2026-10-03
-updated: 2026-10-06
+updated: 2026-10-07
 archived_at: null
 ---
 
@@ -468,13 +468,59 @@ the log — `supabase/setup-cli@v1 ... version: 2.117.0` and the CLI's own
 `currently installed v2.117.0` — matching `package-lock.json`. Rows 5.1 and 5.3
 are settled on this run.
 
-**Caveat on 5.1.** The plan's wording is “a pull request to `master`”; this was a
-push to `master`. `ci.yml` triggers on both and the job definition is identical,
-so the step’s behaviour and position are proven, but the pull-request trigger path
-itself has not been exercised.
+**On 5.1's wording.** The plan says “a pull request to `master`”; this run was a
+push to `master`. The caveat was retired the same day by the mutation-check run
+below, which fired on `event: pull_request` — so both trigger paths have now been
+seen to run the step.
 
 Note also that before this run the step had **never** executed: `fa0de8b` sat
 unpushed for a day, and `git branch -r --contains fa0de8b` was empty. A gate that
 has not been seen to run is not known to be a gate — which is the whole premise of
 Phase 5 change #3.
 
+#### Failure run: the gate fails for the reason it exists (5.2, 5.4, 5.5)
+
+Run <https://github.com/mrczeg1991/dziennik-dziecka/actions/runs/37681063537>
+(PR [#9](https://github.com/mrczeg1991/dziennik-dziecka/pull/9), branch
+`test/policy-widening-probe`, trigger: `pull_request`). `notes_select_own` was
+widened to `using (true)` and nothing else changed. PR closed unmerged, branch
+deleted; the run is the artifact.
+
+**The failure landed on the gate, not downstream.** `smoke` job step states:
+
+```
+✓ Start local Supabase
+X Run database policy tests      <- failed here
+- Configure secrets for build and preview
+- Run npm run build
+- Run smoke test against production preview
+```
+
+Every step after the gate was skipped, so the smoke walk never got the chance to
+report. That is 5.2 exactly.
+
+**The widening was invisible to every other gate.** The `ci` job passed in full on
+the same commit — `npm run lint`, `npx astro check`, `npm run build` all green.
+Nothing but the policy suite noticed that any authenticated session could now read
+every note in the database. This is the clearest evidence for the §6.6 finding:
+deny-by-default makes removal loud and widening silent.
+
+**The log diagnoses without a local re-run** (5.4):
+
+```
+00_helper_sanity.sql    # Failed test 4: "under A: B's note is not visible"
+                        #         have: 1
+                        #         want: 0
+01_notes_isolation.sql  # Failed test 1: "B cannot select A's note"
+                        #         have: 1
+                        #         want: 0
+02_notes_characterization.sql .. ok
+03_notes_destruction.sql ....... ok
+Result: FAIL
+```
+
+File, assertion index, assertion text and have/want are all present. Exactly two
+assertions went red — the two cross-account select assertions, and only those —
+which independently confirms the assertion-to-mutation traceability claimed for
+row 3.2. `02_` and `03_` correctly stayed green: neither tests cross-account
+select.

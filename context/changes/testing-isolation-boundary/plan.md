@@ -849,11 +849,11 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 
 #### Manual
 
-- [x] 5.1 A pull request runs the new step and the `smoke` job passes — fa0de8b (verified via push to master, run 37679261140; the PR trigger path itself was not exercised)
-- [ ] 5.2 The scratch branch with a widened policy fails CI at the policy-test step
+- [x] 5.1 A pull request runs the new step and the `smoke` job passes — fa0de8b (run 37679261140, push to master; PR trigger path confirmed by run 37681063537)
+- [x] 5.2 The scratch branch with a widened policy fails CI at the policy-test step — fa0de8b (run 37681063537; every later step skipped)
 - [x] 5.3 The pinned CLI version in the job log matches `package-lock.json` — fa0de8b
-- [ ] 5.4 The failing run's log names the failing assertion clearly enough to diagnose
-- [ ] 5.5 The deliberate-failure run URL is recorded in `change.md`
+- [x] 5.4 The failing run's log names the failing assertion clearly enough to diagnose — fa0de8b
+- [x] 5.5 The deliberate-failure run URL is recorded in `change.md` — fa0de8b
 
 ### Phase 6: Write the guide back
 
@@ -868,4 +868,4 @@ the hosted project. Never run `supabase test db` with `--linked` or `--db-url`.
 - [x] 6.4 A cold reader can write a new policy test from §6.1 alone
 - [x] 6.5 §2 Risk #1 and §3 Phase 1 no longer claim unprovided protections
 - [x] 6.6 `change.md` records the `F5` decision and the Phase 1 grant reading
-- [ ] 6.7 §3 Phase 1 Status reads `complete`
+- [x] 6.7 §3 Phase 1 Status reads `complete`
