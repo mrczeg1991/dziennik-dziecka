@@ -19,6 +19,9 @@ jobs:
       - run: npx astro sync
       - run: npm run lint
       - run: npx astro check
+      # Placed after the two tools whose reported scope it floors, so a run that examined a
+      # fraction of the repository and exited 0 fails here instead of passing silently.
+      - run: npm run gate:scope
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -61,6 +64,12 @@ jobs:
         run: |
           npm run preview -- --port 4321 &
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:4321/ && break; sleep 1; done
+          # The loop exits 0 whether or not the server ever answered, so without this branch an
+          # unreachable preview is caught only by whatever the smoke walk fails on downstream.
+          curl -sf -o /dev/null http://localhost:4321/ || {
+            echo "preview server did not answer on http://localhost:4321/ within 60s"
+            exit 1
+          }
           BASE_URL=http://localhost:4321 npm run smoke
       - if: always()
         run: supabase stop --no-backup

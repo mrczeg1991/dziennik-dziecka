@@ -3,7 +3,7 @@ change_id: testing-gates-that-gate
 title: Gates that actually gate
 status: implementing
 created: 2026-10-07
-updated: 2026-10-09
+updated: 2026-10-10
 archived_at: null
 ---
 

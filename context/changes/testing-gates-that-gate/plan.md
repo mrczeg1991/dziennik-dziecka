@@ -913,33 +913,33 @@ No data migration. Three pieces of state move:
 
 #### Automated
 
-- [ ] 1.1 Workflow file parses and both jobs run: push a branch and confirm the `ci` job executes
-- [x] 1.2 No `ubuntu-latest` or floating action tag remains
-- [x] 1.3 Existing gates still pass on the pinned image: `npm run lint`, `npx astro check`, `npm run build`
+- [x] 1.1 Workflow file parses and both jobs run: push a branch and confirm the `ci` job executes — eef7119
+- [x] 1.2 No `ubuntu-latest` or floating action tag remains — eef7119
+- [x] 1.3 Existing gates still pass on the pinned image: `npm run lint`, `npx astro check`, `npm run build` — eef7119
 
 #### Manual
 
-- [ ] 1.4 A push to a non-`master` branch shows the `ci` job running and the `smoke` job skipped
-- [ ] 1.5 A PR into `master` shows both jobs running
-- [ ] 1.6 Each pinned SHA resolves to the tag named in its trailing comment
+- [x] 1.4 A push to a non-`master` branch shows the `ci` job running and the `smoke` job skipped
+- [x] 1.5 A PR into `master` shows both jobs running
+- [x] 1.6 Each pinned SHA resolves to the tag named in its trailing comment
 
 ### Phase 2: Gate integrity — a floor on reported scope
 
 #### Automated
 
-- [ ] 2.1 Gate passes on a clean tree: `npm run gate:scope`
-- [ ] 2.2 Lint count expectation matches reality: `npx eslint . -f json` array length equals the `EXPECTED.eslintFiles` value
-- [ ] 2.3 `astro check` still clears the floor: at least 38 files
+- [x] 2.1 Gate passes on a clean tree: `npm run gate:scope`
+- [x] 2.2 Lint count expectation matches reality: `npx eslint . -f json` array length equals the `EXPECTED.eslintFiles` value
+- [x] 2.3 `astro check` still clears the floor: at least 38 files
 - [ ] 2.4 Smoke walk still passes end to end in CI
-- [ ] 2.5 Lint and typecheck pass: `npm run lint`, `npx astro check`
+- [x] 2.5 Lint and typecheck pass: `npm run lint`, `npx astro check`
 
 #### Manual
 
-- [ ] 2.6 Shrinking the lint scope fails the gate
-- [ ] 2.7 An ESLint internal rule throw still fails loudly rather than being mistaken for shrinkage
-- [ ] 2.8 A typo'd expectation key in `scripts/smoke.mjs` now fails the run instead of printing `PASS`
-- [ ] 2.9 Emptying the `steps` array fails the run instead of printing "All smoke steps passed"
-- [ ] 2.10 `context/foundation/lessons.md` has no `<to fill in>` remaining
+- [x] 2.6 Shrinking the lint scope fails the gate
+- [x] 2.7 An ESLint internal rule throw still fails loudly rather than being mistaken for shrinkage
+- [x] 2.8 A typo'd expectation key in `scripts/smoke.mjs` now fails the run instead of printing `PASS`
+- [x] 2.9 Emptying the `steps` array fails the run instead of printing "All smoke steps passed"
+- [x] 2.10 `context/foundation/lessons.md` has no `<to fill in>` remaining
 
 ### Phase 3: Route-guard coverage
 

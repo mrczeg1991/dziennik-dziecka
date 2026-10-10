@@ -11,6 +11,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "smoke": "node scripts/smoke.mjs",
+    "gate:scope": "node scripts/gate-scope.mjs",
     "test:db": "supabase test db",
     "prepare": "husky"
   },

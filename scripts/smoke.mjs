@@ -273,10 +273,49 @@ const steps = [
   ],
 ];
 
+// The conjunction below tests each expectation with `=== undefined ||`, which makes an unknown key
+// silently satisfied: writing `bodyInclude` for `bodyIncludes` asserts nothing and still prints
+// PASS. Keys are therefore checked against this set rather than trusted.
+const EXPECTATION_KEYS = new Set(["status", "location", "bodyIncludes", "bodyExcludes", "bodyOrder", "extract"]);
+
+function unknownKeys(expected) {
+  return Object.keys(expected).filter((key) => !EXPECTATION_KEYS.has(key));
+}
+
+function reportUnknownKeys(name, bad) {
+  console.log(`INVALID  ${name}  -> unknown expectation key(s): ${bad.join(", ")}`);
+  console.log(`         known keys: ${[...EXPECTATION_KEYS].join(", ")}`);
+  console.log(`         an unknown key asserts nothing, so the run is not trustworthy; exiting.`);
+  process.exit(1);
+}
+
+// `failed` starts at 0 and the summary prints success over an empty loop, so a steps array that
+// lost its contents -- a bad merge, a truncated edit -- would exit 0 having asserted nothing.
+// Bump this when steps are added.
+const EXPECTED_STEPS = 36;
+if (steps.length < EXPECTED_STEPS) {
+  console.log(`INVALID  smoke walk carries ${steps.length} step(s), expected at least ${EXPECTED_STEPS}`);
+  console.log(`         a walk that asserts nothing must not report a pass; exiting.`);
+  process.exit(1);
+}
+
+// Most expectations are literal, so their typos are caught here -- before the walk creates any
+// account. A thunk's keys cannot be read without calling it, and a thunk that needs an id captured
+// mid-walk cannot be called yet, so those are checked in the loop at their turn.
+for (const [name, , define] of steps) {
+  if (typeof define === "function") continue;
+  const bad = unknownKeys(define);
+  if (bad.length) reportUnknownKeys(name, bad);
+}
+
 let failed = 0;
 for (const [name, run, define] of steps) {
   const actual = await run();
   const expected = typeof define === "function" ? define() : define;
+  if (typeof define === "function") {
+    const bad = unknownKeys(expected);
+    if (bad.length) reportUnknownKeys(name, bad);
+  }
   let extracted = true;
   if (expected.extract !== undefined) {
     const [pattern, key] = expected.extract;
@@ -303,5 +342,7 @@ for (const [name, run, define] of steps) {
   }
 }
 
-console.log(failed ? `\n${failed} step(s) failed` : "\nAll smoke steps passed");
+// The asserted total is reported rather than left to be inferred, so "it passed" always comes with
+// how much it passed over.
+console.log(failed ? `\n${failed} of ${steps.length} step(s) failed` : `\nAll ${steps.length} smoke steps passed`);
 process.exit(failed ? 1 : 0);
