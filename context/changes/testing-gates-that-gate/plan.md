@@ -997,9 +997,9 @@ No data migration. Three pieces of state move:
 
 - [ ] 6.1 The composite passes on a clean tree: `npm run gates`
 - [ ] 6.2 Each gate is individually runnable
-- [x] 6.3 No `TBD — see §3 Phase 2` remains in `context/foundation/test-plan.md`
-- [x] 6.4 No `required after §3 Phase 2` remains in §5
-- [ ] 6.5 Full gate set green in CI on a PR into `master`
+- [x] 6.3 No `TBD — see §3 Phase 2` remains in `context/foundation/test-plan.md` — 9244a6d
+- [x] 6.4 No `required after §3 Phase 2` remains in §5 — 9244a6d
+- [x] 6.5 Full gate set green in CI on a PR into `master` — 9244a6d
 
 #### Manual
 
