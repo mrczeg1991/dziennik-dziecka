@@ -16,6 +16,8 @@
 
 import { readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+import path from "node:path";
 
 const MIGRATIONS_DIR = "supabase/migrations";
 // Supabase names migrations <14-digit timestamp>_<label>.sql and keys schema_migrations on that
@@ -73,9 +75,27 @@ if (localVersions.length === 0) {
 // can interpolate or log it. (It is still visible to `ps` on the same host for the duration of the
 // call -- accepted, since the alternative the CLI offers is a prompt, and a prompt hangs a build.)
 // --yes for the same reason.
-const npx = process.platform === "win32" ? "npx.cmd" : "npx";
+//
+// The CLI is invoked as a Node script rather than through `npx`. On Windows `npx` is a .cmd shim,
+// and since Node 18.20 (CVE-2024-27980) spawning a .cmd without `shell: true` throws EINVAL -- so
+// `npx` here would mean either a shell string carrying the password, or a gate that only runs on
+// Linux. The bin path comes from the installed package's own manifest, so it survives the package
+// reorganising its dist layout, and the version is pinned by package-lock.json.
+let supabaseBin;
+try {
+  const resolve = createRequire(import.meta.url);
+  const manifestPath = resolve.resolve("supabase/package.json");
+  supabaseBin = path.join(path.dirname(manifestPath), resolve(manifestPath).bin.supabase);
+} catch (error) {
+  fail([
+    `FAIL  migration drift: could not locate the Supabase CLI (${error.message})`,
+    `      it is a devDependency -- run npm ci`,
+    `\n1 migration-drift problem(s)`,
+  ]);
+}
+
 const args = [
-  "supabase",
+  supabaseBin,
   "migration",
   "list",
   "--project-ref",
@@ -86,9 +106,9 @@ const args = [
   "json",
   "--yes",
 ];
-const redactedCommand = `npx supabase migration list --project-ref ${projectRef} --password *** --output-format json --yes`;
+const redactedCommand = `supabase migration list --project-ref ${projectRef} --password *** --output-format json --yes`;
 
-const result = spawnSync(npx, args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+const result = spawnSync(process.execPath, args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
 if (result.error) {
   fail([
     `FAIL  migration drift: could not run the Supabase CLI (${result.error.message})`,
@@ -117,6 +137,10 @@ try {
   ]);
 }
 
+// Measured against the hosted project on 2026-10-11 with CLI 2.117.0, the payload is an OBJECT:
+//   {"migrations":[{"local":"...","remote":"...","time":"..."}],"message":"Migrations listed"}
+// Not the bare array the text table's columns suggest. The array form is still accepted because
+// this shape is undocumented and may change; an unrecognised one fails closed below.
 const rows = Array.isArray(payload) ? payload : Array.isArray(payload.migrations) ? payload.migrations : null;
 if (rows === null) {
   fail([
@@ -130,6 +154,7 @@ if (rows === null) {
 }
 
 // Each row carries the remote-applied version under a "remote" key when the CLI has one for it.
+// Confirmed 2026-10-11: rows are {local, remote, time}, so "remote" is the live key name.
 // If not a single row exposes that key the shape has changed, and a set built from it would be
 // empty -- which would read as "the hosted project has nothing", a false repo-ahead alarm rather
 // than a false pass. Fail on the shape instead of reporting a drift that may not exist.

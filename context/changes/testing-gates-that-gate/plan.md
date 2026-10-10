@@ -979,7 +979,7 @@ No data migration. Three pieces of state move:
 
 #### Automated
 
-- [ ] 5.1 Gate passes against the hosted project with both migrations applied: `npm run gate:drift`
+- [x] 5.1 Gate passes against the hosted project with both migrations applied: `npm run gate:drift`
 - [x] 5.2 Missing credentials fail rather than skip — 29c2301
 - [x] 5.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope` — 29c2301
 - [ ] 5.4 The scheduled job's YAML is valid and the job appears with a schedule trigger
@@ -995,8 +995,8 @@ No data migration. Three pieces of state move:
 
 #### Automated
 
-- [ ] 6.1 The composite passes on a clean tree: `npm run gates`
-- [ ] 6.2 Each gate is individually runnable
+- [x] 6.1 The composite passes on a clean tree: `npm run gates`
+- [x] 6.2 Each gate is individually runnable
 - [x] 6.3 No `TBD — see §3 Phase 2` remains in `context/foundation/test-plan.md` — 9244a6d
 - [x] 6.4 No `required after §3 Phase 2` remains in §5 — 9244a6d
 - [x] 6.5 Full gate set green in CI on a PR into `master` — 9244a6d
