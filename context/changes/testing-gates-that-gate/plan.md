@@ -980,16 +980,16 @@ No data migration. Three pieces of state move:
 #### Automated
 
 - [ ] 5.1 Gate passes against the hosted project with both migrations applied: `npm run gate:drift`
-- [x] 5.2 Missing credentials fail rather than skip
-- [x] 5.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
+- [x] 5.2 Missing credentials fail rather than skip — 29c2301
+- [x] 5.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope` — 29c2301
 - [ ] 5.4 The scheduled job's YAML is valid and the job appears with a schedule trigger
 
 #### Manual
 
-- [x] 5.5 A locally added migration file not applied remotely fails the gate with a repo-ahead message
-- [x] 5.6 The gate's verdict is parsed from JSON, not inferred from an exit code
+- [x] 5.5 A locally added migration file not applied remotely fails the gate with a repo-ahead message — 29c2301
+- [x] 5.6 The gate's verdict is parsed from JSON, not inferred from an exit code — 29c2301
 - [ ] 5.7 The first scheduled run completes green and its log shows both migration versions compared
-- [x] 5.8 `context/deployment/deploy-plan.md` no longer claims the remote is empty
+- [x] 5.8 `context/deployment/deploy-plan.md` no longer claims the remote is empty — 29c2301
 
 ### Phase 6: Seat the gates and update the quality contract
 
@@ -997,8 +997,8 @@ No data migration. Three pieces of state move:
 
 - [ ] 6.1 The composite passes on a clean tree: `npm run gates`
 - [ ] 6.2 Each gate is individually runnable
-- [ ] 6.3 No `TBD — see §3 Phase 2` remains in `context/foundation/test-plan.md`
-- [ ] 6.4 No `required after §3 Phase 2` remains in §5
+- [x] 6.3 No `TBD — see §3 Phase 2` remains in `context/foundation/test-plan.md`
+- [x] 6.4 No `required after §3 Phase 2` remains in §5
 - [ ] 6.5 Full gate set green in CI on a PR into `master`
 
 #### Manual

@@ -15,6 +15,9 @@
     "gate:routes": "node scripts/gate-routes.mjs",
     "gate:build-output": "node scripts/gate-build-output.mjs",
     "gate:drift": "node scripts/gate-migration-drift.mjs",
+    "gates:pre": "npm run gate:scope && npm run gate:routes && npm run gate:drift",
+    "gates:post": "npm run gate:build-output",
+    "gates": "npm run gates:pre && npm run build && npm run gates:post",
     "test:db": "supabase test db",
     "prepare": "husky"
   },

@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-10-06
+> Last updated: 2026-10-10
 
 ## 1. Strategy
 
@@ -79,7 +79,7 @@ orchestrator updates Status as artifacts appear on disk.
 | #   | Phase name                                           | Goal (one line)                                                                                                                                                                                                                                                                                                                                                  | Risks covered                                                               | Test types                                         | Status       | Change folder                                 |
 | --- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- | ------------ | --------------------------------------------- |
 | 1   | Isolation at the enforcing layer                     | Prove the database policies — not the handlers — are what keeps one account's notes from everyone else, and that no `delete` policy exists, so a delete affects no rows                                                                                                                                                                                          | #1, #4                                                                      | database policy tests                              | complete     | `context/changes/testing-isolation-boundary/` |
-| 2   | Gates that actually gate                             | Make CI fail for the three reasons it currently cannot: hosted schema drifting from deployed code, a gate run that aborted rather than passed, and a data-touching route never added to the guard list                                                                                                                                                           | #2, #3, #6, #7                                                              | gates, route-coverage test, build-output assertion | change opened| `context/changes/testing-gates-that-gate/`     |
+| 2   | Gates that actually gate                             | Make CI fail for the three reasons it currently cannot: hosted schema drifting from deployed code, a gate run that aborted rather than passed, and a data-touching route never added to the guard list                                                                                                                                                           | #2, #3, #6, #7                                                              | gates, route-coverage test, build-output assertion | complete     | `context/changes/testing-gates-that-gate/`     |
 | 3   | A runner, and the boundaries nothing can reach today | Stand up a test runner, then prove a period-bounded read returns every note inside the window and none outside it, with the boundary resolved in the parent's wall clock — and cover the two read boundaries the policy layer structurally cannot: a parent's own soft-deleted note stays out of their list, and one child's notes stay out of the other child's | #5 (window half), #4 (column half), #1 (soft-delete and cross-child halves) | unit + integration                                 | not started  | —                                             |
 | 4   | Search answer completeness                           | Prove a "how often" or "in July" answer is complete within its range once ranking exists                                                                                                                                                                                                                                                                         | #5 (ranking half)                                                           | integration                                        | not started  | —                                             |
 
@@ -118,7 +118,7 @@ are examples of the category, not endorsements.
 | end-to-end over HTTP                            | `scripts/smoke.mjs` (in-repo, zero dependencies)              | n/a                      | 307 lines, roughly 38 assertions, already covering anonymous guards, the full note lifecycle, ordering, and a cross-account isolation sweep. **Keep it; do not replace it.** It is the only thing currently asserting anything.                                                                                                                                                                                                              |
 | browser-level e2e                               | not adopted                                                   | —                        | Promote to a real browser driver only when a test needs hydration or client-side validation an HTTP walk cannot reach. Not yet justified.                                                                                                                                                                                                                                                                                                    |
 | accessibility                                   | `eslint-plugin-jsx-a11y`                                      | 6.10.2                   | Already installed and running inside the lint gate. No separate runtime accessibility layer is scheduled.                                                                                                                                                                                                                                                                                                                                    |
-| build-output assertion                          | none yet — see §3 Phase 2                                     | —                        | A scan of the build output for secret values needs no framework.                                                                                                                                                                                                                                                                                                                                                                             |
+| build-output assertion                          | `scripts/gate-build-output.mjs` (in-repo, zero dependencies)  | n/a                      | Run with `npm run gate:build-output` after a build. Scans the resolved asset root for secret values, JWT-shaped strings and the secret identifiers, and asserts the asset-root invariants (`dist/client` in both wrangler configs, `.assetsignore` present and listing all four server artifacts). Needed no framework, as predicted. checked: 2026-10-10 |
 | (optional) AI-native — answer relevance judge   | model-as-judge over search answers — checked: 2026-10-02      | n/a                      | **When NOT to use:** never for the completeness or count half of a period question — that half has a deterministic oracle in the fixture, and a judge turns a provable fact into a probabilistic one. Also not as a CI gate at this scale: a non-deterministic gate on a solo project costs more trust than it buys. Gated on §3 Phase 4.                                                                                                    |
 | (optional) AI-native — multimodal screen review | vision review of one screen — checked: 2026-10-02             | n/a                      | **When NOT to use:** not for the landing and identity slice or any copy or layout change — §7 excludes that budget — and never as a substitute for the accessibility linting already installed. Selective and manual; not a gate.                                                                                                                                                                                                            |
 | (optional) AI-native — exploratory agent pass   | browser automation available in-session — checked: 2026-10-02 | n/a                      | **When NOT to use:** not for Risk #2. Guard-list coverage has a cheaper deterministic test that also catches _future_ routes, which an exploratory pass cannot.                                                                                                                                                                                                                                                                              |
@@ -142,10 +142,10 @@ phase lands; before that, the gate is planned.
 | build                                            | CI (both jobs)                                   | required — wired          | configuration and adapter breakage                                           |
 | end-to-end HTTP walk on critical flows           | CI (`smoke` job, against a fresh local database) | required — wired          | broken critical user paths, cross-account exposure over HTTP                 |
 | database policy tests                            | local + CI (`smoke` job)                         | required — wired          | Risk #1, #4 — exposure and destruction at the layer that enforces them       |
-| gate-integrity check                             | CI                                               | required after §3 Phase 2 | Risk #7 — a gate that aborted or matched zero files reported as a pass       |
-| route-guard coverage                             | CI                                               | required after §3 Phase 2 | Risk #2 — a data-touching route never added to the guard list                |
-| build-output secret scan                         | CI                                               | required after §3 Phase 2 | Risk #6 — a secret or note body reaching the client bundle                   |
-| migration-drift check against the linked project | between merge and deploy                         | required after §3 Phase 2 | Risk #3 — deployed code expecting a schema the hosted database does not have |
+| gate-integrity check                             | CI (`ci` job) + Cloudflare build command         | required — wired          | Risk #7 — a gate that aborted or matched zero files reported as a pass       |
+| route-guard coverage                             | CI (`ci` job) + Cloudflare build command         | required — wired          | Risk #2 — a data-touching route never added to the guard list                |
+| build-output secret scan                         | CI (both jobs) + Cloudflare build command        | required — wired          | Risk #6 — a secret reaching the client bundle (note bodies cannot: see §6.4) |
+| migration-drift check against the linked project | Cloudflare build command + scheduled CI sweep    | required — wired          | Risk #3 — deployed code expecting a schema the hosted database does not have |
 | unit + integration                               | local + CI                                       | required after §3 Phase 3 | Risk #5, #4 — boundary and column-scope logic no HTTP test can reach         |
 
 A post-edit hook in the local agent loop is **recommended, not required**,
@@ -253,16 +253,139 @@ Three rules this rollout phase earned:
 
 ### 6.4 Adding a test for a new route or endpoint
 
-- TBD — see §3 Phase 2, for the guard-list coverage pattern, which must fail
-  when a new data-touching route exists rather than when someone remembers to
-  add it to a list.
-- Until then, the reference for endpoint behaviour over HTTP is the existing
-  walk at `scripts/smoke.mjs`, run with `npm run smoke` against a live server.
+Delivered by §3 Phase 2 (`context/changes/testing-gates-that-gate/`).
+
+**You do not add a test. You classify the route, and the existing gate covers it.**
+That is the whole point of the pattern: a new route under `src/pages/` must appear
+in `src/lib/protected-routes.json` under either `protected` or `public`, or
+`npm run gate:routes` fails. Nothing else is required of you.
+
+**Location and naming.** `src/lib/protected-routes.json` holds both halves:
+`protected` is the list of path prefixes `src/middleware.ts` matches with
+`startsWith`; `public` is the explicit allowlist of routes reachable anonymously.
+The middleware **imports** this file — it is one list with two readers, not a copy,
+so the checker cannot drift from what the app enforces. Do not add a prefix to
+`middleware.ts`; it reads the JSON.
+
+**Run it** with `npm run gate:routes`. No server, no build, no runner — it is a
+filesystem glob plus set comparison, which is why it sits in the pre-build half of
+`npm run gates`.
+
+**The assertion is inverted, and that is the load-bearing decision.** A positive
+check-list — "these paths must redirect" — keeps passing the moment someone adds a
+route and forgets the list, which is *the exact failure being guarded against*
+(§2 Risk #2's named anti-pattern). So the gate enumerates the routes that **exist**
+and requires each to be classified. Forgetting fails; there is no way to forget
+quietly. **Never replace this with a list of paths to check.**
+
+**Four assertions**, each failing with the offending route named:
+
+1. Every enumerated route is matched by a `protected` prefix or listed in `public`.
+   This is the drift detector.
+2. No `public` entry is shadowed by a `protected` prefix — that would make it
+   unreachable anonymously. (Reproduced: adding a `/auth` prefix locks the parent
+   out of signing in, and the gate names all three affected pages.)
+3. Every `protected` prefix matches at least one route that exists. A stale prefix
+   silently *widens*, because `startsWith` over-matches: a left-behind `/children`
+   would also protect a future `/children-export`.
+4. Every `public` entry has a file behind it.
+
+Assertion 3 is also what stops the gate passing vacuously: with zero routes
+enumerated, every prefix matches nothing, so an empty enumeration produces failures
+rather than silence.
+
+**Enumerate from `src/pages`, never the repo root.** `.claude/worktrees/` holds a
+second full checkout of the application, including `src/pages/` files that do not
+exist on `master`. A repo-wide walk reports those as phantom routes.
+
+**Prefixes do not nest both ways.** `/children` does not match `/api/children`,
+which is why both appear in `protected`. Check the matching direction before
+assuming one prefix covers another.
+
+**An endpoint may self-guard in addition, never instead.** `api/children.ts`,
+`api/notes.ts` and `api/notes/[id].ts` each check the session, because they need
+`user.id` for their own query. That is redundancy, not the boundary, and
+`AGENTS.md` now says so — do not "fix" it away. It has a consequence for testing:
+a black-box `302 → /auth/signin` on a POST proves *something* refused, not that the
+middleware did.
+
+**To prove refusal over HTTP**, the anonymous block in `scripts/smoke.mjs` is
+*generated* from the same JSON, so a prefix added there is asserted over HTTP for
+free. Those steps use **GET**, deliberately: every endpoint under `src/pages/api`
+exports `POST` only, so a GET answering `302` can only be the middleware — without
+it the request would 404 or 405, never redirect. That is what makes the assertion
+attribute the refusal to the right layer.
+
+**Reference files:** `scripts/gate-routes.mjs`, `src/lib/protected-routes.json`.
 
 ### 6.5 Adding a CI gate-integrity check
 
-- TBD — see §3 Phase 2, for asserting that a gate actually examined files
-  rather than exiting zero after aborting.
+Delivered by §3 Phase 2 (`context/changes/testing-gates-that-gate/`).
+
+**§2 had this risk backwards, and the correction is the pattern.** Risk #7 was
+written against the recorded incident — a rule throwing and aborting the whole lint
+run — on the assumption that an abort could be mistaken for a pass. Measured: it
+cannot. An ESLint internal rule throw exits **2** with an `Oops! Something went
+wrong!` banner, and every total-empty-scope condition also exits 2. CI already fails
+on those unaided.
+
+What is silent is **partial shrinkage**. `npx eslint . --ignore-pattern "src/**" -f json`
+examined 3 files of 37, exit 0, zero bytes of human-visible output. One extra
+`.gitignore` line takes the lint gate green over most of the codebase. Reproduced
+during this phase: with `src/` gitignored, `npm run lint` exits **0** having examined
+4 files of 38.
+
+So the instrument is **a floor on reported scope, not an abort detector**. Build
+that, not a second linter watching the first (§2's named anti-pattern).
+
+**Location and naming.** `scripts/gate-scope.mjs`, one `EXPECTED` object at the top,
+one entry per scope-reporting tool, each carrying the command that re-derives it.
+**Run it** with `npm run gate:scope`.
+
+**Two modes, and picking the wrong one breaks the gate:**
+
+- **`exact`** for a deterministic scope. ESLint's is `.gitignore`-driven and
+  reproducible, so any movement is a deliberate change to what is linted. The
+  friction is the feature: a phase that adds a linted file must bump the number in
+  the same commit, which is the review moment where someone confirms the file is
+  meant to be in scope.
+- **`floor`** for a tool that applies its own ignore list. `@astrojs/check` does not
+  use the raw `tsconfig` file set, so its count can move without a code change. A
+  floor confines that to the one direction that matters — shrinkage. This was
+  vindicated immediately: the `astro check` count moved 38 → 39 → 40 → 41 → 42 as
+  this phase added scripts. Had it been `exact`, the phase would have failed its own
+  gate on the first run.
+
+**Getting the count out of the tool is the fiddly part.** ESLint reports its
+examined-file count **only** through the JSON formatter — `npx eslint . -f json`
+emits one object per examined file, so the array length is the number. Neither
+`--debug` nor `--stats` gives it. `astro check` prints `Result (N files):` on stdout,
+uncoloured while every other line is coloured, so it is matched raw.
+
+**Do not consult the exit code.** ESLint exit 1 means "found lint problems", which
+`npm run lint` owns; the count is still reported. Read the payload, not the status.
+
+**A run that reports no count is a failure, not a pass.** This is the rule that
+keeps the gate from becoming the thing it guards against. Reproduced: with
+`eslint.config.js` made invalid, the gate reports `no parseable JSON (exit 2)` and
+fails rather than skipping that check.
+
+**Re-derive, never guess the delta.** Run the command and read the number. Over this
+phase the eslint count went 37 → 38 → 39 → 40 → 41, and the `.json` file added in
+§6.4 moved the `astro check` count but *not* the eslint count, because no config
+block targets `.json`. A guessed `+1` would have been wrong at least once.
+
+**The same discipline applies to any quantity assertion.** `scripts/smoke.mjs`
+carries `EXPECTED_STEPS`, because `failed` starts at 0 and the summary printed "All
+smoke steps passed" over an empty loop — zero steps exited 0. It also validates every
+expectation object's keys against the known set, because the conjunction tests each
+with `=== undefined ||`, so a typo'd `bodyInclude` asserted nothing and still printed
+`PASS`. Both were live false-pass vectors, not hypotheticals.
+
+**pgTAP needs no floor.** `finish()` emits `# Looks like you planned N tests but ran M`
+and TAP-fails, which `pg_prove` propagates. The plan count is self-detecting.
+
+**Reference file:** `scripts/gate-scope.mjs`.
 
 ### 6.6 Per-rollout-phase notes
 
@@ -276,6 +399,63 @@ that fails. Four of the six widenings traced during this phase were invisible to
 the HTTP walk — `notes_select_own → using (true)`, dropping the child-ownership
 `exists` from either `notes_insert_own` or `notes_update_own`, and adding any
 permissive `children` update or delete policy. Each now has a named assertion.
+
+**§3 Phase 2 — at the gate layer the asymmetry inverts: total failure is loud,
+partial shrinkage is silent.** Phase 1's note records that in the schema, _removing_
+a policy is loud and _widening_ one is silent. One layer up, in the tooling, it runs
+the other way. A gate that dies completely is unmissable — exit 2, a banner, CI red.
+A gate that quietly examined 4 files instead of 38 exits 0 and prints nothing. The
+consequence for instrument design: **assert a quantity, not the enforcing layer's
+behaviour.** You cannot ask ESLint "did you really check?"; you can ask "how many did
+you report?" and refuse an answer below the floor. §6.5 has the detail.
+
+**Three hand-maintained lists existed, and the pattern adopted is
+enumerate-then-invert against a small explicit allowlist.** The guard prefixes in
+`middleware.ts`, the four anonymous paths hardcoded in the smoke walk, and the
+implicit set of "routes we remembered". Each would drift the moment someone added a
+route — the failure being guarded against. All three now derive from one file
+(`src/lib/protected-routes.json`), and the assertion runs from the filesystem
+inward: enumerate what exists, require it to be classified. The allowlist is the one
+surface that must be edited deliberately, which is exactly where the review moment
+belongs.
+
+**GitHub Actions is advisory on this plan; Cloudflare's build command is the
+blocking seat.** `gh api repos/.../branches/master/protection` returns
+`403 "Upgrade to GitHub Pro or make this repository public"`, so required status
+checks do not exist and a red CI run stops no merge. What research could not see is
+that a Cloudflare Git integration watches `master` and builds on every push, and a
+build command exiting non-zero publishes nothing. So the gates are seated in
+`npm run gates`, which that build command calls; CI runs the same scripts as named
+steps for fast feedback. **If the repository ever becomes public or moves to a paid
+plan, turn on branch protection and revisit this asymmetry** — the duplication exists
+only because the cheaper seat is unavailable.
+
+**Two §2 assumptions were corrected by measurement, not argument.** Risk #7's
+direction (above). And Risk #6 pairs "no secret value" with "no note body" in the
+build output — that second half is **vacuous** here: `output: "server"`, no
+`prerender` export anywhere, and the build emits zero `.html` files, so no note
+content can be baked in. The gate is scoped to secrets only; asserting the other
+half would be ceremony that reads as coverage.
+
+**The asset-root hole was never live, and the fix is still correct.** `wrangler.jsonc`
+declared `"directory": "./dist"` while the generated `dist/server/wrangler.json`
+declared `"../client"`, and `dist/server/.dev.vars` holds both secrets in plaintext —
+so if the checked-in value governed, both were fetchable at `/server/.dev.vars`.
+Settled empirically: with the two configs deliberately disagreeing,
+`wrangler deploy --dry-run` still read `dist/client`, and `curl` against the live
+Worker returns 404 with no secret content for `/server/.dev.vars`, `/.dev.vars`,
+`/server/wrangler.json` and `/wrangler.json`. **The generated config governs.** The
+checked-in value was corrected anyway, because it costs nothing and removes the
+question rather than answering it for one Wrangler version.
+
+**Absent credentials fail, they do not skip.** `gate:drift` exits non-zero when
+`SUPABASE_PROJECT_REF` or `SUPABASE_DB_PASSWORD` is missing. A drift gate that
+silently no-ops on a missing secret is Risk #7 wearing Risk #3's clothes — it would
+report green from the deploy path while checking nothing. The same reasoning put a
+`NOTE` line on the build-output gate's exact-value scan, which immediately earned
+itself: in the `ci` job it reported that no secret was in the environment, revealing
+that this repository has **no repository secrets at all** and that `ci.yml`'s
+long-standing `SUPABASE_URL`/`SUPABASE_KEY` build env has always been ceremonial.
 
 **`F5` — Decision: Fix A, database half deferred.** Recorded in full at
 `context/changes/testing-isolation-boundary/change.md` (§Notes), because
@@ -325,7 +505,7 @@ these unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-10-02
+- Strategy (§1–§5) last reviewed: 2026-10-02 (§4 build-output row and §5 gate rows updated 2026-10-10 by §3 Phase 2)
 - Stack versions last verified: 2026-10-02
 - AI-native tool references last verified: 2026-10-02
 
