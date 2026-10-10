@@ -962,34 +962,34 @@ No data migration. Three pieces of state move:
 
 #### Automated
 
-- [x] 4.1 Gate passes against a fresh build: `npm run build && npm run gate:build-output`
-- [x] 4.2 Secrets absent from the client bundle
-- [x] 4.3 No server artifact under the served root
-- [x] 4.4 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
-- [x] 4.5 Build still succeeds with the corrected asset directory: `npm run build`
+- [x] 4.1 Gate passes against a fresh build: `npm run build && npm run gate:build-output` — cebbdf7
+- [x] 4.2 Secrets absent from the client bundle — cebbdf7
+- [x] 4.3 No server artifact under the served root — cebbdf7
+- [x] 4.4 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope` — cebbdf7
+- [x] 4.5 Build still succeeds with the corrected asset directory: `npm run build` — cebbdf7
 
 #### Manual
 
-- [x] 4.6 `npx wrangler deploy --dry-run --outdir <tmp>` confirms which asset directory Wrangler resolves, settling research's Open Question 1
-- [x] 4.7 Copying `dist/server/.dev.vars` into `dist/client/` fails the gate
-- [x] 4.8 Removing the `.dev.vars` line from `dist/client/.assetsignore` fails the gate
-- [ ] 4.9 `curl` against the deployed Worker for `/server/.dev.vars` and `/.dev.vars` returns no secret content
+- [x] 4.6 `npx wrangler deploy --dry-run --outdir <tmp>` confirms which asset directory Wrangler resolves, settling research's Open Question 1 — cebbdf7
+- [x] 4.7 Copying `dist/server/.dev.vars` into `dist/client/` fails the gate — cebbdf7
+- [x] 4.8 Removing the `.dev.vars` line from `dist/client/.assetsignore` fails the gate — cebbdf7
+- [x] 4.9 `curl` against the deployed Worker for `/server/.dev.vars` and `/.dev.vars` returns no secret content — cebbdf7
 
 ### Phase 5: Migration drift at deploy, plus a scheduled sweep
 
 #### Automated
 
 - [ ] 5.1 Gate passes against the hosted project with both migrations applied: `npm run gate:drift`
-- [ ] 5.2 Missing credentials fail rather than skip
-- [ ] 5.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
+- [x] 5.2 Missing credentials fail rather than skip
+- [x] 5.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
 - [ ] 5.4 The scheduled job's YAML is valid and the job appears with a schedule trigger
 
 #### Manual
 
-- [ ] 5.5 A locally added migration file not applied remotely fails the gate with a repo-ahead message
-- [ ] 5.6 The gate's verdict is parsed from JSON, not inferred from an exit code
+- [x] 5.5 A locally added migration file not applied remotely fails the gate with a repo-ahead message
+- [x] 5.6 The gate's verdict is parsed from JSON, not inferred from an exit code
 - [ ] 5.7 The first scheduled run completes green and its log shows both migration versions compared
-- [ ] 5.8 `context/deployment/deploy-plan.md` no longer claims the remote is empty
+- [x] 5.8 `context/deployment/deploy-plan.md` no longer claims the remote is empty
 
 ### Phase 6: Seat the gates and update the quality contract
 

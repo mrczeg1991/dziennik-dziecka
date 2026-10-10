@@ -5,6 +5,11 @@ on:
     branches: ["**"]
   pull_request:
     branches: [master]
+  # Drift is bidirectional and a merge trigger samples at the wrong times: the hosted-project link
+  # lives in the gitignored supabase/.temp/, so a laptop `supabase db push` can advance the hosted
+  # database with no merge involved. Off-the-hour to avoid GitHub's scheduling peak.
+  schedule:
+    - cron: "23 5 * * *"
 
 jobs:
   ci:
@@ -87,3 +92,26 @@ jobs:
           BASE_URL=http://localhost:4321 npm run smoke
       - if: always()
         run: supabase stop --no-backup
+
+  # Deliberately NOT a step in the `ci` job: this one talks to the hosted project, so running it on
+  # every branch push would need credentials everywhere and hammer the project. The blocking copy of
+  # this check is the one inside `npm run gates`, which Cloudflare's build command calls. This job is
+  # the scheduled sweep, and it is advisory.
+  #
+  # Needs neither Docker nor the local stack, so it checks out, installs and runs -- no
+  # `supabase start`. The CLI comes from the `supabase` devDependency, version-pinned by
+  # package-lock.json.
+  drift:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run gate:drift
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
