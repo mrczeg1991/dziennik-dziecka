@@ -1,6 +1,9 @@
 // Smoke test: proves the built app, the Cloudflare adapter and the Supabase auth flow still work together.
 // Zero dependencies on purpose. Run against a live server: BASE_URL=http://localhost:4321 node scripts/smoke.mjs
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:4321";
 const runId = Date.now();
 const email = `smoke-${runId}@example.com`;
@@ -72,30 +75,37 @@ async function request(path, { method = "GET", form } = {}) {
   return { status: response.status, location: response.headers.get("location") ?? "", body: await response.text() };
 }
 
+// The guard list the middleware itself matches on, read rather than copied. scripts/gate-routes.mjs
+// proves the list covers every route that exists; these steps prove the app actually refuses.
+// Resolved from this file's own location so the walk does not depend on the caller's cwd.
+const { protected: protectedPrefixes } = JSON.parse(
+  readFileSync(path.join(import.meta.dirname, "../src/lib/protected-routes.json"), "utf8"),
+);
+
+// Prefixes that only ever appear with a child segment need a concrete id. Any syntactically valid
+// uuid will do: the middleware guard fires before either handler resolves the id, so no real child
+// or note has to exist. This is the only place `/api/notes/<id>` -- the edit and soft-delete
+// endpoint -- is exercised anonymously.
+const CONCRETE_PROTECTED_PATHS = [`/children/${placeholderId}`, `/api/notes/${placeholderId}`];
+
+// GET, not POST, and deliberately so. Every endpoint under src/pages/api exports POST only, so a
+// GET that answers 302 to /auth/signin can only be the middleware: without it the request would
+// 404 or 405, never redirect. The endpoints' own self-guards live inside their POST handlers, so a
+// POST 302 would prove "something refused" rather than "the middleware refused".
+const anonymousSteps = [
+  ["home renders", () => request("/"), { status: 200 }],
+  ...[...protectedPrefixes, ...CONCRETE_PROTECTED_PATHS].map((pathname) => [
+    `${pathname} redirects anonymous user`,
+    () => request(pathname),
+    { status: 302, location: "/auth/signin" },
+  ]),
+];
+
 // A step is [name, runner, expectations]. Both the runner and the expectations may be thunks, so a
 // step that needs an id captured by an earlier step resolves after that capture, not at load time.
+// The anonymous block leads because every later step holds a session.
 const steps = [
-  ["home renders", () => request("/"), { status: 200 }],
-  ["dashboard redirects anonymous user", () => request("/dashboard"), { status: 302, location: "/auth/signin" }],
-  [
-    "add child rejects anonymous user",
-    () => request("/api/children", { method: "POST", form: { name: childName } }),
-    { status: 302, location: "/auth/signin" },
-  ],
-  [
-    "add note rejects anonymous user",
-    () =>
-      request("/api/notes", {
-        method: "POST",
-        form: { child_id: placeholderId, content: noteNow, occurred_at: occurredNow },
-      }),
-    { status: 302, location: "/auth/signin" },
-  ],
-  [
-    "child page rejects anonymous user",
-    () => request(`/children/${placeholderId}`),
-    { status: 302, location: "/auth/signin" },
-  ],
+  ...anonymousSteps,
   [
     "signup creates account",
     () => request("/api/auth/signup", { method: "POST", form: { email, password } }),
@@ -292,7 +302,7 @@ function reportUnknownKeys(name, bad) {
 // `failed` starts at 0 and the summary prints success over an empty loop, so a steps array that
 // lost its contents -- a bad merge, a truncated edit -- would exit 0 having asserted nothing.
 // Bump this when steps are added.
-const EXPECTED_STEPS = 36;
+const EXPECTED_STEPS = 38;
 if (steps.length < EXPECTED_STEPS) {
   console.log(`INVALID  smoke walk carries ${steps.length} step(s), expected at least ${EXPECTED_STEPS}`);
   console.log(`         a walk that asserts nothing must not report a pass; exiting.`);

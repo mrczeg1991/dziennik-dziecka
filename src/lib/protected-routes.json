@@ -1,0 +1,12 @@
+{
+  "protected": ["/dashboard", "/children", "/api/children", "/api/notes"],
+  "public": [
+    "/",
+    "/auth/signin",
+    "/auth/signup",
+    "/auth/confirm-email",
+    "/api/auth/signin",
+    "/api/auth/signup",
+    "/api/auth/signout"
+  ]
+}

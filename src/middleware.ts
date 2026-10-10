@@ -1,9 +1,16 @@
 import { defineMiddleware } from "astro:middleware";
 import { createClient } from "@/lib/supabase";
+import routeClassification from "@/lib/protected-routes.json";
 
 // `startsWith` matching, so "/children" covers "/children/<id>" and "/api/notes" covers
-// "/api/notes/<id>".
-const PROTECTED_ROUTES = ["/dashboard", "/children", "/api/children", "/api/notes"];
+// "/api/notes/<id>". The prefix list does NOT nest the other way -- "/children" does not match
+// "/api/children" -- which is why both appear in the list.
+//
+// The list lives in a shared .json so that scripts/gate-routes.mjs reads the same data this
+// matcher uses rather than a copy of it. That file also carries the `public` allowlist; every
+// route under src/pages/ must appear in one or the other, or `npm run gate:routes` fails. Add a
+// new route there, not here.
+const PROTECTED_ROUTES = routeClassification.protected;
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const supabase = createClient(context.request.headers, context.cookies);

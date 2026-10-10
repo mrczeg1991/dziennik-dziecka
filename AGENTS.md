@@ -6,7 +6,7 @@ Dziennik dziecka: a parent's private notes about their children — an Astro 7 +
 
 - `SUPABASE_URL` / `SUPABASE_KEY` are server-only secrets via Astro's `astro:env` schema (`@src/env.d.ts`, `@src/lib/supabase.ts`) — never expose or log them client-side.
 - Do not write to `context/archive/` — owned by the 10xDevs skill chain in `@CLAUDE.md`; archived changes are immutable.
-- To protect a new page, add its path to `PROTECTED_ROUTES` in `@src/middleware.ts` — don't gate auth ad hoc inside a page.
+- `@src/lib/protected-routes.json` is the single source of truth for route auth: `protected` holds the prefixes `@src/middleware.ts` matches with `startsWith`, `public` the routes reachable anonymously. **Every new route under `src/pages/` must be classified in one of the two**, or `npm run gate:routes` fails the build. Don't add the prefix to `middleware.ts` — it reads this file. An endpoint may _additionally_ self-guard when it needs `user.id` for its own query (as `api/children.ts`, `api/notes.ts` and `api/notes/[id].ts` do) — redundantly, never instead; don't "fix" those away.
 - Use the `@/*` import alias (maps to `src/*`, set in `@tsconfig.json`) instead of relative `../../` chains.
 
 ## Project Structure & Module Organization

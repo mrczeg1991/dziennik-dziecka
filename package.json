@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "smoke": "node scripts/smoke.mjs",
     "gate:scope": "node scripts/gate-scope.mjs",
+    "gate:routes": "node scripts/gate-routes.mjs",
     "test:db": "supabase test db",
     "prepare": "husky"
   },

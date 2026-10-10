@@ -22,6 +22,8 @@ jobs:
       # Placed after the two tools whose reported scope it floors, so a run that examined a
       # fraction of the repository and exited 0 fails here instead of passing silently.
       - run: npm run gate:scope
+      # Needs neither a server nor a build, so it runs before the build is paid for.
+      - run: npm run gate:routes
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

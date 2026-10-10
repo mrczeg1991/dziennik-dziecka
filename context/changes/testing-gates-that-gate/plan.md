@@ -927,36 +927,36 @@ No data migration. Three pieces of state move:
 
 #### Automated
 
-- [x] 2.1 Gate passes on a clean tree: `npm run gate:scope`
-- [x] 2.2 Lint count expectation matches reality: `npx eslint . -f json` array length equals the `EXPECTED.eslintFiles` value
-- [x] 2.3 `astro check` still clears the floor: at least 38 files
-- [ ] 2.4 Smoke walk still passes end to end in CI
-- [x] 2.5 Lint and typecheck pass: `npm run lint`, `npx astro check`
+- [x] 2.1 Gate passes on a clean tree: `npm run gate:scope` — 68cf3e5
+- [x] 2.2 Lint count expectation matches reality: `npx eslint . -f json` array length equals the `EXPECTED.eslintFiles` value — 68cf3e5
+- [x] 2.3 `astro check` still clears the floor: at least 38 files — 68cf3e5
+- [x] 2.4 Smoke walk still passes end to end in CI — 68cf3e5
+- [x] 2.5 Lint and typecheck pass: `npm run lint`, `npx astro check` — 68cf3e5
 
 #### Manual
 
-- [x] 2.6 Shrinking the lint scope fails the gate
-- [x] 2.7 An ESLint internal rule throw still fails loudly rather than being mistaken for shrinkage
-- [x] 2.8 A typo'd expectation key in `scripts/smoke.mjs` now fails the run instead of printing `PASS`
-- [x] 2.9 Emptying the `steps` array fails the run instead of printing "All smoke steps passed"
-- [x] 2.10 `context/foundation/lessons.md` has no `<to fill in>` remaining
+- [x] 2.6 Shrinking the lint scope fails the gate — 68cf3e5
+- [x] 2.7 An ESLint internal rule throw still fails loudly rather than being mistaken for shrinkage — 68cf3e5
+- [x] 2.8 A typo'd expectation key in `scripts/smoke.mjs` now fails the run instead of printing `PASS` — 68cf3e5
+- [x] 2.9 Emptying the `steps` array fails the run instead of printing "All smoke steps passed" — 68cf3e5
+- [x] 2.10 `context/foundation/lessons.md` has no `<to fill in>` remaining — 68cf3e5
 
 ### Phase 3: Route-guard coverage
 
 #### Automated
 
-- [ ] 3.1 Gate passes on a clean tree: `npm run gate:routes`
-- [ ] 3.2 Middleware behaviour unchanged: `npm run build` succeeds and `npx astro check` passes
-- [ ] 3.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
+- [x] 3.1 Gate passes on a clean tree: `npm run gate:routes`
+- [x] 3.2 Middleware behaviour unchanged: `npm run build` succeeds and `npx astro check` passes
+- [x] 3.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
 - [ ] 3.4 Smoke walk passes with the generated anonymous assertions
-- [ ] 3.5 `/api/notes/<id>` is asserted anonymously in `scripts/smoke.mjs`
+- [x] 3.5 `/api/notes/<id>` is asserted anonymously in `scripts/smoke.mjs`
 
 #### Manual
 
-- [ ] 3.6 Adding an empty `src/pages/api/measurements.ts` fails `gate:routes` as unclassified
-- [ ] 3.7 Removing `/api/children` from the `protected` list fails `gate:routes`
-- [ ] 3.8 Adding a stale prefix such as `/api/export` fails the necessity assertion
-- [ ] 3.9 A signed-out request to `/api/notes/<id>` redirects to `/auth/signin` against a live server
+- [x] 3.6 Adding an empty `src/pages/api/measurements.ts` fails `gate:routes` as unclassified
+- [x] 3.7 Removing `/api/children` from the `protected` list fails `gate:routes`
+- [x] 3.8 Adding a stale prefix such as `/api/export` fails the necessity assertion
+- [x] 3.9 A signed-out request to `/api/notes/<id>` redirects to `/auth/signin` against a live server
 
 ### Phase 4: Build-output secret scan and asset-root invariant
 
