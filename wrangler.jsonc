@@ -6,7 +6,11 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "binding": "ASSETS",
-    "directory": "./dist",
+    // Must stay dist/client, not dist. The build writes dist/server/.dev.vars with both secret
+    // values in plaintext, and .assetsignore exists only under dist/client -- so a root of
+    // "./dist" would make both secrets fetchable at /server/.dev.vars. npm run gate:build-output
+    // asserts this value and the generated dist/server/wrangler.json agree.
+    "directory": "./dist/client",
     "not_found_handling": "404-page",
   },
   "observability": {

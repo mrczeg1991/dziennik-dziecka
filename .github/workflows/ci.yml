@@ -28,6 +28,12 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      # Same secrets as the build step, so the exact-value half of the scan has concrete strings
+      # to look for rather than falling back to the shape and identifier checks alone.
+      - run: npm run gate:build-output
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
   smoke:
     # Deliberately narrower than the `ci` job above. `on.push.branches` is `**` so
@@ -62,6 +68,12 @@ jobs:
           printf 'SUPABASE_URL=%s\nSUPABASE_KEY=%s\n' "$API_URL" "$ANON_KEY" > .env
           cp .env .dev.vars
       - run: npm run build
+      # The local stack's real URL and anon key live in supabase.env here, not in the step
+      # environment, so they are exported for the exact-value half of the scan.
+      - name: Scan build output for secrets
+        run: |
+          source supabase.env
+          SUPABASE_URL="$API_URL" SUPABASE_KEY="$ANON_KEY" npm run gate:build-output
       - name: Run smoke test against production preview
         run: |
           npm run preview -- --port 4321 &

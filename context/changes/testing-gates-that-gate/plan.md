@@ -945,34 +945,34 @@ No data migration. Three pieces of state move:
 
 #### Automated
 
-- [x] 3.1 Gate passes on a clean tree: `npm run gate:routes`
-- [x] 3.2 Middleware behaviour unchanged: `npm run build` succeeds and `npx astro check` passes
-- [x] 3.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
-- [ ] 3.4 Smoke walk passes with the generated anonymous assertions
-- [x] 3.5 `/api/notes/<id>` is asserted anonymously in `scripts/smoke.mjs`
+- [x] 3.1 Gate passes on a clean tree: `npm run gate:routes` — 082a546
+- [x] 3.2 Middleware behaviour unchanged: `npm run build` succeeds and `npx astro check` passes — 082a546
+- [x] 3.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope` — 082a546
+- [x] 3.4 Smoke walk passes with the generated anonymous assertions — 082a546
+- [x] 3.5 `/api/notes/<id>` is asserted anonymously in `scripts/smoke.mjs` — 082a546
 
 #### Manual
 
-- [x] 3.6 Adding an empty `src/pages/api/measurements.ts` fails `gate:routes` as unclassified
-- [x] 3.7 Removing `/api/children` from the `protected` list fails `gate:routes`
-- [x] 3.8 Adding a stale prefix such as `/api/export` fails the necessity assertion
-- [x] 3.9 A signed-out request to `/api/notes/<id>` redirects to `/auth/signin` against a live server
+- [x] 3.6 Adding an empty `src/pages/api/measurements.ts` fails `gate:routes` as unclassified — 082a546
+- [x] 3.7 Removing `/api/children` from the `protected` list fails `gate:routes` — 082a546
+- [x] 3.8 Adding a stale prefix such as `/api/export` fails the necessity assertion — 082a546
+- [x] 3.9 A signed-out request to `/api/notes/<id>` redirects to `/auth/signin` against a live server — 082a546
 
 ### Phase 4: Build-output secret scan and asset-root invariant
 
 #### Automated
 
-- [ ] 4.1 Gate passes against a fresh build: `npm run build && npm run gate:build-output`
-- [ ] 4.2 Secrets absent from the client bundle
-- [ ] 4.3 No server artifact under the served root
-- [ ] 4.4 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
-- [ ] 4.5 Build still succeeds with the corrected asset directory: `npm run build`
+- [x] 4.1 Gate passes against a fresh build: `npm run build && npm run gate:build-output`
+- [x] 4.2 Secrets absent from the client bundle
+- [x] 4.3 No server artifact under the served root
+- [x] 4.4 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope`
+- [x] 4.5 Build still succeeds with the corrected asset directory: `npm run build`
 
 #### Manual
 
-- [ ] 4.6 `npx wrangler deploy --dry-run --outdir <tmp>` confirms which asset directory Wrangler resolves, settling research's Open Question 1
-- [ ] 4.7 Copying `dist/server/.dev.vars` into `dist/client/` fails the gate
-- [ ] 4.8 Removing the `.dev.vars` line from `dist/client/.assetsignore` fails the gate
+- [x] 4.6 `npx wrangler deploy --dry-run --outdir <tmp>` confirms which asset directory Wrangler resolves, settling research's Open Question 1
+- [x] 4.7 Copying `dist/server/.dev.vars` into `dist/client/` fails the gate
+- [x] 4.8 Removing the `.dev.vars` line from `dist/client/.assetsignore` fails the gate
 - [ ] 4.9 `curl` against the deployed Worker for `/server/.dev.vars` and `/.dev.vars` returns no secret content
 
 ### Phase 5: Migration drift at deploy, plus a scheduled sweep
