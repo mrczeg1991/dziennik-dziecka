@@ -13,6 +13,22 @@
     "directory": "./dist/client",
     "not_found_handling": "404-page",
   },
+  // The @astrojs/cloudflare adapter injects the SESSION binding for Astro sessions, but only the
+  // binding name -- not which namespace it points at. That id lived solely in the Cloudflare
+  // dashboard, so every deploy logged:
+  //   ▲ [WARNING] The local configuration ... differs from the remote configuration of your Worker
+  //      kv_namespaces: [ { - id: "4b29b131..." } ]
+  //      Uploading the Worker will override the remote configuration with your local one.
+  // and the binding survived only as "env.SESSION (inherited)". Declaring the id here puts the
+  // deploy-time configuration in version control instead of relying on that inheritance, which
+  // nothing asserts and which would break sessions silently if it ever stopped.
+  // A KV namespace id is an account-scoped resource identifier, not a credential.
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "4b29b1312683478a9ae027e990648d55",
+    },
+  ],
   "observability": {
     "enabled": true,
   },

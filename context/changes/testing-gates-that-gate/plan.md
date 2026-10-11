@@ -1003,7 +1003,7 @@ No data migration. Three pieces of state move:
 
 #### Manual
 
-- [ ] 6.6 A Cloudflare build triggered by a push to `master` runs `npm run gates` and its log shows all four gates
+- [x] 6.6 A Cloudflare build triggered by a push to `master` runs `npm run gates` and its log shows all four gates — 47a2dd1
 - [ ] 6.7 A deliberately broken gate merged to `master` produces a failed Cloudflare build and no new deployment
 - [ ] 6.8 The deployed app still works after a green gated build: sign in, add a child, add a note
 - [ ] 6.9 §6.4 and §6.5 are specific enough to add a new route by following them alone
