@@ -988,7 +988,7 @@ No data migration. Three pieces of state move:
 
 - [x] 5.5 A locally added migration file not applied remotely fails the gate with a repo-ahead message — 29c2301 (re-proven against the hosted project 2026-10-11, a9ba455)
 - [x] 5.6 The gate's verdict is parsed from JSON, not inferred from an exit code — 29c2301
-- [ ] 5.7 The first scheduled run completes green and its log shows both migration versions compared
+- [ ] 5.7 The first scheduled run completes green and its log shows both migration versions compared — **left open deliberately at close (2026-10-11).** Not measured: the cron `23 5 * * *` had not fired when §3 Phase 2 was closed, and the decision was to treat the scheduled sweep as standing monitoring rather than a completion criterion. The plan's own sequencing forced the choice — phase 6 flips §3 to `complete`, but this row can first be satisfied the morning after phase 5 lands, so a cron-backed criterion can never be green at the moment its phase closes. Check the `drift` job's first run; a red one is a real finding, not a formality.
 - [x] 5.8 `context/deployment/deploy-plan.md` no longer claims the remote is empty — 29c2301
 
 ### Phase 6: Seat the gates and update the quality contract

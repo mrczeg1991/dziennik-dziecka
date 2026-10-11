@@ -478,6 +478,17 @@ assertions 3 and 4 of that file are expected to flip to failures the day Fix B
 lands. That failure is the intended signal that the guarantee moved into Postgres —
 update the file then, do not weaken the hardening to keep it green.
 
+**Phase 2 closed with one criterion unmeasured.** Row 5.7 of
+`context/changes/testing-gates-that-gate/plan.md` — the first green run of the
+scheduled `drift` job — was left open, not ticked. The cron (`23 5 * * *`) had not
+fired when the phase closed, and the scheduled sweep is treated as standing
+monitoring rather than a completion criterion. Worth knowing for any future
+cron-backed phase: a criterion that waits on a schedule can never be green at the
+moment its phase closes, so either the phase closes with it open or the phase waits
+a day. Everything else in that phase was measured, including the one that matters
+most — a deliberately broken gate failed the Cloudflare build and published no new
+Worker version at all (plan row 6.7).
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout. Future contributors should respect
