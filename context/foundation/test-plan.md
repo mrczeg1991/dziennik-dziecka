@@ -258,7 +258,15 @@ Delivered by §3 Phase 2 (`context/changes/testing-gates-that-gate/`).
 **You do not add a test. You classify the route, and the existing gate covers it.**
 That is the whole point of the pattern: a new route under `src/pages/` must appear
 in `src/lib/protected-routes.json` under either `protected` or `public`, or
-`npm run gate:routes` fails. Nothing else is required of you.
+`npm run gate:routes` fails. No *test* is required of you.
+
+**One thing else is, and it is not in this section's gate.** A route file is a
+linted file, so adding one grows ESLint's examined count and `EXPECTED.eslintFiles`
+in `scripts/gate-scope.mjs` must be bumped in the same commit. Measured 2026-10-11
+by following this section alone: `gate:routes` went green and `gate:scope` then
+failed at 42-vs-41 — green on the gate this section names, red on the gate it does
+not, and only on the deploy path. Re-derive the number per §6.5; never guess the
+delta.
 
 **Location and naming.** `src/lib/protected-routes.json` holds both halves:
 `protected` is the list of path prefixes `src/middleware.ts` matches with
