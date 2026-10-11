@@ -982,7 +982,7 @@ No data migration. Three pieces of state move:
 - [x] 5.1 Gate passes against the hosted project with both migrations applied: `npm run gate:drift` — a9ba455
 - [x] 5.2 Missing credentials fail rather than skip — 29c2301
 - [x] 5.3 Lint passes with the bumped count: `npm run lint` then `npm run gate:scope` — 29c2301
-- [ ] 5.4 The scheduled job's YAML is valid and the job appears with a schedule trigger
+- [x] 5.4 The scheduled job's YAML is valid and the job appears with a schedule trigger — 29c2301 (GitHub parsed and ran this file from `master` in run 38158371307, no `startup_failure`; `on.schedule` and the `drift` job both present on the default branch, which is where GitHub registers crons. Whether the cron actually fires is 5.7.)
 
 #### Manual
 
