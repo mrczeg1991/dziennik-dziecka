@@ -133,19 +133,35 @@ czyli `gates:pre` (`gate:scope` → `gate:routes` → `gate:drift`) → `npm run
 `gates:post` (`gate:build-output`). Kolejność jest nośna: `gate:build-output` potrzebuje istniejącego
 `dist/`, a wszystko inne biegnie zanim zapłacimy za build.
 
-**Co trzeba ustawić w dashboardzie Cloudflare** (Workers & Pages → projekt → Settings):
+**Co trzeba ustawić w dashboardzie Cloudflare.** Ścieżka: Worker `dziennik-dziecka` → **Settings** →
+**Build**. To **nie** jest „Variables and Secrets" — w Workers (inaczej niż w Pages) zmienne runtime
+i build-time to dwa rozłączne zbiory, a `wrangler secret put` z kroku 4 ustawia wyłącznie runtime.
+Zmienne build-time w Workers Builds są dodatkowo **per trigger**, więc ustawiamy je na triggerze
+produkcyjnym (`master`), nie na preview.
 
-| Co | Wartość |
-|---|---|
-| Build command | `npm run gates` |
-| Build output directory | bez zmian |
-| Zmienna build-environment `SUPABASE_PROJECT_REF` | ref projektu Supabase |
-| Zmienna build-environment `SUPABASE_DB_PASSWORD` | hasło do bazy projektu hostowanego |
+| Co | Gdzie w Settings → Build | Wartość |
+|---|---|---|
+| Build command | Build configuration | `npm run gates` |
+| Deploy command | Build configuration | bez zmian (domyślnie `npx wrangler deploy`) |
+| `SUPABASE_PROJECT_REF` | Build variables and secrets | `ojhtrttucvuthgxxmpce` |
+| `SUPABASE_DB_PASSWORD` | Build variables and secrets, **jako secret** | hasło do bazy |
 
-Bez tych dwóch zmiennych `gate:drift` **celowo wywala build** — patrz krok 6. Ta jedna rzecz jest
-konfiguracją poza repo, i dlatego logika bramek siedzi w wersjonowanych skryptach `scripts/gate-*.mjs`,
-a dashboard trzyma tylko jedną wartość. **Zanotuj poprzedni build command przed zmianą — tej zmiany
-nie cofnie `git revert`.**
+Hasło zaznacz jako secret — maskuje je w logach builda. Bramka redaguje własne komunikaty
+(`--password ***`), ale logu Cloudflare nie kontroluje.
+
+Build command i deploy command to **osobne kroki**, i na tym opiera się cała konstrukcja: nieudany
+build command nie dopuszcza do deploy commandu, więc nic się nie publikuje. Bez tych dwóch zmiennych
+`gate:drift` **celowo wywala build** — patrz krok 6. To jedyna konfiguracja poza repo, i dlatego
+logika bramek siedzi w wersjonowanych skryptach `scripts/gate-*.mjs`, a dashboard trzyma tylko jedną
+wartość. **Zanotuj poprzedni build command przed zmianą — tej zmiany nie cofnie `git revert`.**
+
+Można to też ustawić API-em, gdyby UI się zmieniło:
+`PATCH /accounts/{account_id}/builds/triggers/{trigger_uuid}` (pola `build_command`,
+`deploy_command`) oraz `.../environment_variables` (mapa `{"NAZWA":{"value":…,"is_secret":…}}`).
+
+**Sekrety GitHuba** dla zaplanowanego joba `drift` to osobne miejsce i osobny zbiór:
+`Settings → Secrets and variables → Actions` (nie Dependabot / Codespaces / Agents). Ustawione
+2026-10-11: `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`.
 
 Dla `master` i PR-ów do niego ten sam zestaw bramek biegnie też w CI jako osobne, nazwane kroki
 (`gate:scope`, `gate:routes`, `gate:build-output`); `gate:drift` jest tam wyłączony i chodzi zamiast
