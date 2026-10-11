@@ -26,3 +26,9 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Git worktrees created by the 10x skill chain. These directories carry their own .git, so
+# committing one records a gitlink with no .gitmodules entry -- which breaks any clone that
+# initialises submodules. GitHub Actions did not notice (actions/checkout defaults to
+# submodules: false); Cloudflare Workers Builds failed the clone outright.
+.claude/worktrees/
