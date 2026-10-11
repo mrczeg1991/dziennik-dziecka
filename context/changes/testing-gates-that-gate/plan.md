@@ -1005,5 +1005,5 @@ No data migration. Three pieces of state move:
 
 - [x] 6.6 A Cloudflare build triggered by a push to `master` runs `npm run gates` and its log shows all four gates — 47a2dd1
 - [ ] 6.7 A deliberately broken gate merged to `master` produces a failed Cloudflare build and no new deployment
-- [ ] 6.8 The deployed app still works after a green gated build: sign in, add a child, add a note
+- [x] 6.8 The deployed app still works after a green gated build: sign in, add a child, add a note — 0863b61 (walked by hand on https://dziennik-dziecka.mrczeg.workers.dev 2026-10-11, all three steps. This also clears the one risk in that deploy: the session survived, so the `kv_namespaces` id now declared in `wrangler.jsonc` points at the namespace production actually uses — the declaration replaced an inherited binding nothing asserted. Externally verified alongside it: `/`, `/auth/signin`, `/auth/signup` → 200; `/dashboard`, `/children`, `/api/notes/<uuid>` → 302 → `/auth/signin`; and 17 consecutive polls across the publish window answered, so the deploy had no availability gap.)
 - [ ] 6.9 §6.4 and §6.5 are specific enough to add a new route by following them alone
