@@ -3,7 +3,7 @@ project: Dziennik dziecka
 version: 3
 status: draft
 created: 2026-09-22
-updated: 2026-10-05
+updated: 2026-10-12
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -84,7 +84,7 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
   - Czy w notatkach napisanych do tej pory nie ma imion ani innych danych jednoznacznie identyfikujących? Decyzja o wysyłaniu notatek na zewnątrz opiera się na założeniu, że ich nie ma, a jednorazowe przetworzenie istniejącego zbioru jest nieodwracalne. To przegląd własnych notatek, nie badanie. — Owner: user. Block: no (przed jednorazowym przetworzeniem, nie przed planowaniem).
   - Jaka jest realna trafność dopasowania na polskich, skrótowych notatkach o zdrowiu? Liczby z benchmarków są przybliżeniem, nie pomiarem na tym zbiorze. — Owner: user. Block: no (mierzalne tylko po wdrożeniu, na własnych notatkach).
   - Czy darmowy plan hostingu obejmuje wybrany model i jaki rozmiar ma jego reprezentacja? Rozmiar trzeba znać przed utworzeniem miejsca na nią. — Owner: user. Block: no (do sprawdzenia przy implementacji).
-- **Risk:** Gwiazda przewodnia M-2 i jedyny kawałek, który dotyka całego zbioru notatek naraz — notatki napisane przed tym kawałkiem trzeba jednorazowo przetworzyć, a ten krok jest nieodwracalny, więc przegląd ich treści idzie przed nim, nie po nim. Druga zasada ochronna PRD („notatki dziecka widzi tylko zalogowane konto") musi obowiązywać również w szukaniu: wyniki nie mogą przeciekać ani między kontami, ani między dziećmi tego samego konta — zakres per dziecko jest tu pomocą, nie zabezpieczeniem. Dwie pułapki wykonania, których nie wolno pomieszać: pytanie o okres wymaga twardego odcięcia po dacie i kompletności w przedziale (pytanie „jak często" na rankingu podobieństwa po prostu zwróci złą liczbę), a jednorazowe przetworzenie istniejących notatek to inna ścieżka niż odpowiadanie na pytanie w 10 sekund.
+- **Risk:** Gwiazda przewodnia M-2 i jedyny kawałek, który dotyka całego zbioru notatek naraz — notatki napisane przed tym kawałkiem trzeba jednorazowo przetworzyć, a ten krok jest nieodwracalny, więc przegląd ich treści idzie przed nim, nie po nim. Druga zasada ochronna PRD („notatki dziecka widzi tylko zalogowane konto") musi obowiązywać również w szukaniu: wyniki nie mogą przeciekać ani między kontami, ani między dziećmi tego samego konta — zakres per dziecko jest tu pomocą, nie zabezpieczeniem. Dwie pułapki wykonania, których nie wolno pomieszać: pytanie o okres wymaga twardego odcięcia po dacie i kompletności w przedziale (pytanie „jak często" na rankingu podobieństwa po prostu zwróci złą liczbę), a jednorazowe przetworzenie istniejących notatek to inna ścieżka niż odpowiadanie na pytanie w 10 sekund. Test kompletności przedziału należy do tego kawałka: `context/foundation/test-plan.md` §3 Faza 3 przekazała go tutaj, bo czytanie, które miałby sprawdzać, powstaje dopiero w S-03 — a oczekiwany zbiór notatek musi pochodzić z fixture'u, nigdy z tego samego zapytania, które jest testowane.
 - **Status:** ready
 
 ### S-04: Rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę

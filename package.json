@@ -18,6 +18,9 @@
     "gates:pre": "npm run gate:scope && npm run gate:routes && npm run gate:drift",
     "gates:post": "npm run gate:build-output",
     "gates": "npm run gates:pre && npm run build && npm run gates:post",
+    "test:unit": "vitest run tests/unit",
+    "test:int": "vitest run tests/integration",
+    "test": "npm run test:unit && npm run test:int",
     "test:db": "supabase test db",
     "prepare": "husky"
   },
@@ -61,6 +64,7 @@
     "supabase": "^2.23.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.3",
     "wrangler": "^4.131.1"
   },
   "lint-staged": {

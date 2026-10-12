@@ -27,6 +27,11 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# Vitest reporter output. The JSON reporter writes under this directory, and ESLint scope is
+# .gitignore-driven -- an untracked, unignored output directory would move gate:scope's exact
+# file count between runs.
+.vitest/
+
 # Git worktrees created by the 10x skill chain. These directories carry their own .git, so
 # committing one records a gitlink with no .gitmodules entry -- which breaks any clone that
 # initialises submodules. GitHub Actions did not notice (actions/checkout defaults to
