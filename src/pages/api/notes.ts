@@ -2,13 +2,9 @@ import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { getChild, type Child } from "@/lib/children";
 import { createNote } from "@/lib/notes";
-import { WALL_CLOCK_RE, warsawWallClock } from "@/lib/wall-clock";
+import { isFutureWallClock, WALL_CLOCK_RE, warsawWallClock } from "@/lib/wall-clock";
 
 const CONTENT_MAX_LENGTH = 2000;
-// Not cosmetic: a Worker's `Date.now()` reports the time of the last I/O and does not advance
-// during execution, and a device clock can run a minute or two fast. Without slack a note saved
-// at the current minute would be rejected as being in the future.
-const FUTURE_TOLERANCE_MS = 5 * 60_000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const POST: APIRoute = async (context) => {
@@ -62,7 +58,7 @@ export const POST: APIRoute = async (context) => {
   if (!WALL_CLOCK_RE.test(occurredAt)) {
     return fail("Nieprawidłowa data i godzina");
   }
-  if (occurredAt > warsawWallClock(new Date(Date.now() + FUTURE_TOLERANCE_MS))) {
+  if (isFutureWallClock(occurredAt)) {
     return fail("Data i godzina nie mogą być w przyszłości");
   }
 

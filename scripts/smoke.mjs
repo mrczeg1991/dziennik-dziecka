@@ -4,6 +4,10 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+// `YYYY-MM-DDTHH:mm` in Poland — the shape `occurred_at` stores. A sibling plain-ESM module, so
+// this script stays dependency- and build-free while a unit test can import the same code.
+import { warsawWallClock } from "./lib/wall-clock.mjs";
+
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:4321";
 const runId = Date.now();
 const email = `smoke-${runId}@example.com`;
@@ -27,14 +31,6 @@ const jar = new Map();
 const ids = {};
 
 const DAY_MS = 86_400_000;
-
-// `YYYY-MM-DDTHH:mm` in Poland — the shape `occurred_at` stores. Mirrors src/lib/wall-clock.ts
-// rather than importing it, since this script stays dependency- and build-free.
-function warsawWallClock(at = new Date()) {
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Warsaw", dateStyle: "short", timeStyle: "short" })
-    .format(at)
-    .replace(" ", "T");
-}
 
 const occurredNow = warsawWallClock();
 const occurredBackdated = warsawWallClock(new Date(Date.now() - 3 * DAY_MS));

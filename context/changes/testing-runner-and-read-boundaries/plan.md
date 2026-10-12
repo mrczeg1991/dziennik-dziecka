@@ -909,34 +909,34 @@ repository secrets at all.
 
 #### Automated
 
-- [x] 1.1 Unit tests pass and report a non-zero count: `npm run test:unit`
-- [x] 1.2 Linting passes over the new test files: `npm run lint`
-- [x] 1.3 Type checking passes over the new test files: `npx astro check`
-- [x] 1.4 Scope gates pass with re-derived counts: `npm run gate:scope`
-- [x] 1.5 The full blocking gate chain still passes: `npm run gates`
+- [x] 1.1 Unit tests pass and report a non-zero count: `npm run test:unit` — 71e5055
+- [x] 1.2 Linting passes over the new test files: `npm run lint` — 71e5055
+- [x] 1.3 Type checking passes over the new test files: `npx astro check` — 71e5055
+- [x] 1.4 Scope gates pass with re-derived counts: `npm run gate:scope` — 71e5055
+- [x] 1.5 The full blocking gate chain still passes: `npm run gates` — 71e5055
 
 #### Manual
 
-- [x] 1.6 §3 Phase 3's row no longer promises a period-bounded-read test, and the Order rationale paragraph says where that half went
-- [x] 1.7 S-03's Risk line in the roadmap carries the window-completeness obligation, including the fixture-not-query requirement
-- [x] 1.8 Confirm whether `getViteConfig()` resolved cleanly or the documented fallback was needed, and note which, for Phase 5's §4 row
+- [x] 1.6 §3 Phase 3's row no longer promises a period-bounded-read test, and the Order rationale paragraph says where that half went — 71e5055
+- [x] 1.7 S-03's Risk line in the roadmap carries the window-completeness obligation, including the fixture-not-query requirement — 71e5055
+- [x] 1.8 Confirm whether `getViteConfig()` resolved cleanly or the documented fallback was needed, and note which, for Phase 5's §4 row — 71e5055
 
 ### Phase 2: The wall-clock boundary, including both DST transitions
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass, including both DST transition cases: `npm run test:unit`
-- [ ] 2.2 The parity test confirms `scripts/lib/wall-clock.mjs` and `src/lib/wall-clock.ts` agree across the fixed instant set
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Type checking passes: `npx astro check`
-- [ ] 2.5 Scope gates pass with re-derived counts: `npm run gate:scope`
-- [ ] 2.6 The smoke walk still runs and still reports all 38 steps passing, against a local preview with a local Supabase stack: `npm run smoke`
+- [x] 2.1 Unit tests pass, including both DST transition cases: `npm run test:unit`
+- [x] 2.2 The parity test confirms `scripts/lib/wall-clock.mjs` and `src/lib/wall-clock.ts` agree across the fixed instant set
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Type checking passes: `npx astro check`
+- [x] 2.5 Scope gates pass with re-derived counts: `npm run gate:scope`
+- [x] 2.6 The smoke walk still runs and still reports all 38 steps passing, against a local preview with a local Supabase stack: `npm run smoke`
 
 #### Manual
 
-- [ ] 2.7 `npm run smoke` output was read, not just exit-checked — confirm it printed `All 38 smoke steps passed` rather than exiting 0 over an unexecuted walk
-- [ ] 2.8 The future-date and backdated smoke steps still pass, confirming the predicate extraction preserved behaviour
-- [ ] 2.9 The tolerance comment explaining the Worker clock survived the move
+- [x] 2.7 `npm run smoke` output was read, not just exit-checked — confirm it printed `All 38 smoke steps passed` rather than exiting 0 over an unexecuted walk
+- [x] 2.8 The future-date and backdated smoke steps still pass, confirming the predicate extraction preserved behaviour
+- [x] 2.9 The tolerance comment explaining the Worker clock survived the move
 
 ### Phase 3: The integration harness and the three read boundaries
 

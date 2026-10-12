@@ -17,13 +17,13 @@ const EXPECTED = {
   // npx eslint . -f json  -> array length. Exact: ESLint's scope is .gitignore-driven and
   // deterministic, so any movement is a deliberate change to what is linted. Adding a linted
   // file must bump this in the same commit -- re-derive the number, never guess the delta.
-  eslintFiles: { mode: "exact", value: 43 },
+  eslintFiles: { mode: "exact", value: 44 },
   // npx astro check -> "Result (N files):". Floor, not exact: @astrojs/check applies its own
   // ignore list rather than the raw tsconfig file set, so N can move without a code change. A
   // floor confines that to the one direction that matters -- shrinkage. It sits one above the
   // ESLint count rather than level with it: tsconfig.json includes .astro/types.d.ts, which astro
   // check counts and ESLint skips because .gitignore ignores .astro/.
-  astroCheckFiles: { mode: "floor", value: 44 },
+  astroCheckFiles: { mode: "floor", value: 45 },
 };
 
 function run(command) {

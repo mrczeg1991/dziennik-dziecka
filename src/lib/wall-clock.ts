@@ -24,6 +24,24 @@ export function warsawWallClock(at: Date = new Date()): string {
 }
 
 /**
+ * Slack allowed on a "not in the future" check. Not cosmetic: a Worker's `Date.now()` reports the
+ * time of the last I/O and does not advance during execution, and a device clock can run a minute
+ * or two fast. Without slack a note saved at the current minute would be rejected as being in the
+ * future.
+ */
+export const FUTURE_TOLERANCE_MS = 5 * 60_000;
+
+/**
+ * Whether a submitted wall clock is in the future, beyond the tolerance above. The comparison is
+ * lexicographic between two `YYYY-MM-DDTHH:mm` strings — the submitted one, and the Poland wall
+ * clock at `now` plus the tolerance. `now` is a parameter so the boundary can be tested against a
+ * fixed instant rather than the real clock.
+ */
+export function isFutureWallClock(submitted: string, now: Date = new Date()): boolean {
+  return submitted > warsawWallClock(new Date(now.getTime() + FUTURE_TOLERANCE_MS));
+}
+
+/**
  * `"YYYY-MM-DDTHH:mm[:ss]"` to `"dd.mm.rrrr, HH:mm"` by slicing. Never constructs a
  * `Date`, so no time zone is ever applied to a stored wall clock.
  */
