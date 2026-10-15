@@ -673,23 +673,38 @@ was verified member-by-member: `gate:scope` (all three floors), `gate:routes`,
 `SUPABASE_PROJECT_REF` / `SUPABASE_DB_PASSWORD` and fails rather than skipping by
 design (§6.6). This phase touches no migrations or schema.
 
-**Verification note (2026-10-15), criterion 4.5.** Not measured. Observing the
-new CI steps run needs a push to the remote, which the user deliberately
-declined for now — the three phase commits are local only. What *was* checked
-locally: the YAML carries no tabs and parses structurally, `test:unit` sits
-before `gate:scope` in the `ci` job, `Run integration tests` sits after
-`Run database policy tests` and before `Configure secrets for build and
-preview`, and the `supabase status -o env` mapping names the three variables
-`tests/integration/fixtures.ts` actually reads. The first real run of these
-steps will be the user's next push.
+Followed up the same day, outside this phase's scope: the scheduled sweep had
+been failing on the hosted side since 2026-10-12 because the CLI now wants
+`SUPABASE_ACCESS_TOKEN` as well, and the gate reported that as an unrecognised
+JSON shape rather than as a missing secret (`62a30c6` fixes both halves, and
+`c37f01e` makes the sweep runnable on demand instead of once a day). Run
+**38811290402** then read `PASS  migrations agree: 2 version(s) applied both
+sides`, so the one member of `npm run gates` this phase could not run locally is
+now known green against the hosted project.
 
-**Verification note (2026-10-15), criterion 4.6.** Not measured, and its premise
-was wrong. Observing the `smoke` job's integration step needs the same push the
-user declined. Separately, this criterion asked for the step to run "against an
-empty database" and expected the fixture teardown to find nothing to remove —
-but `tests/integration/fixtures.ts` seeds and deletes strictly by the reserved
-`f1c70000-0000-0000-0000-` prefix and tears down *before* seeding, so it neither
-requires an empty database nor reports what the first teardown found. The
+**Verification note (2026-10-15), criterion 4.5.** Measured, after the user
+reversed the earlier decision not to push. `master` was pushed at `d9339ef` and
+run **38808892260** came back green on both jobs. The `ci` job's
+`Run npm run test:unit` step reports `Test Files 1 passed (1)` /
+`Tests 35 passed (35)`, and the `gate:scope` step immediately after it prints
+all three counters including `PASS  unit tests passed  -> 35 (expected at least
+35)` — so the new floor is live in CI, not only locally. The `smoke` job's
+`Run integration tests` step reports `Tests 6 passed (6)` across both files.
+`drift` was skipped, correctly: it is `if: github.event_name == 'schedule'`.
+
+One half of the criterion as written is still unobserved: it asks for a PR into
+`master` to run `test:int`, and this was a direct push. The step ran under the
+other arm of the same `if` on line 53, which no PR-specific condition guards, so
+nothing about the PR path is in doubt — but it has not been watched run.
+
+**Verification note (2026-10-15), criterion 4.6.** The step was observed to run
+and pass (see 4.5), but the criterion's own premise was wrong, so what it asked
+to be confirmed cannot be confirmed — and does not need to be. It asked for the
+step to run "against an empty database" and expected the fixture teardown to
+find nothing to remove on the first run — but `tests/integration/fixtures.ts`
+seeds and deletes strictly by the reserved `f1c70000-0000-0000-0000-` prefix and
+tears down *before* seeding, so it neither requires an empty database nor
+reports what the first teardown found. The
 comment written into `ci.yml` records the real reason the step sits where it
 does: both suites run in that window so a failure is about the code and not
 residue, and so neither is skipped when a later step fails. §6.3 should carry
@@ -987,16 +1002,16 @@ repository secrets at all.
 
 #### Automated
 
-- [x] 4.1 The floor is live and correct: `npm run gate:scope` passes
-- [x] 4.2 The floor actually catches shrinkage: renaming a unit test file so it stops matching makes `npm run gate:scope` fail naming the shortfall, then revert
-- [x] 4.3 The full blocking chain passes locally: `npm run gates`
-- [x] 4.4 Both suites pass: `npm run test:unit && npm run test:int`
+- [x] 4.1 The floor is live and correct: `npm run gate:scope` passes — d9339ef
+- [x] 4.2 The floor actually catches shrinkage: renaming a unit test file so it stops matching makes `npm run gate:scope` fail naming the shortfall, then revert — d9339ef
+- [x] 4.3 The full blocking chain passes locally: `npm run gates` — d9339ef
+- [x] 4.4 Both suites pass: `npm run test:unit && npm run test:int` — d9339ef
 
 #### Manual
 
-- [x] 4.5 Push a branch and confirm the `ci` job runs `test:unit`, and that a PR into `master` runs `test:int` in the `smoke` job
-- [x] 4.6 Confirm the `smoke` job's integration step ran against an empty database — its output should show the fixture teardown finding nothing to remove on the first run
-- [x] 4.7 Read §5's new sentence and confirm it states plainly which half can block a deploy and which cannot
+- [x] 4.5 Push a branch and confirm the `ci` job runs `test:unit`, and that a PR into `master` runs `test:int` in the `smoke` job — d9339ef
+- [x] 4.6 Confirm the `smoke` job's integration step ran against an empty database — its output should show the fixture teardown finding nothing to remove on the first run — d9339ef
+- [x] 4.7 Read §5's new sentence and confirm it states plainly which half can block a deploy and which cannot — d9339ef
 
 ### Phase 5: Close the contract — write the cookbook
 
