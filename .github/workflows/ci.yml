@@ -10,9 +10,16 @@ on:
   # database with no merge involved. Off-the-hour to avoid GitHub's scheduling peak.
   schedule:
     - cron: "23 5 * * *"
+  # The drift sweep is otherwise observable only once a day, which makes a credential change
+  # unverifiable until the next morning -- and a drift gate nobody can run on demand is a gate
+  # whose own health goes unchecked. Manual only; it does not widen what runs on a push.
+  workflow_dispatch:
 
 jobs:
   ci:
+    # A manual dispatch exists to run the drift sweep below and nothing else; the lint, typecheck
+    # and test chain is already covered by the push that produced the commit.
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -50,7 +57,9 @@ jobs:
     # every branch; a gate confined to `master` would never have run against
     # `origin/feature/notes-dashboard`. This job starts a full Supabase stack, so it
     # stays on `master` and PRs into it. The asymmetry is intended; do not "fix" it.
-    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
+    if: >-
+      github.event_name != 'workflow_dispatch' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'pull_request')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -116,13 +125,13 @@ jobs:
   # Deliberately NOT a step in the `ci` job: this one talks to the hosted project, so running it on
   # every branch push would need credentials everywhere and hammer the project. The blocking copy of
   # this check is the one inside `npm run gates`, which Cloudflare's build command calls. This job is
-  # the scheduled sweep, and it is advisory.
+  # the scheduled sweep plus an on-demand one, and it is advisory.
   #
   # Needs neither Docker nor the local stack, so it checks out, installs and runs -- no
   # `supabase start`. The CLI comes from the `supabase` devDependency, version-pinned by
   # package-lock.json.
   drift:
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
