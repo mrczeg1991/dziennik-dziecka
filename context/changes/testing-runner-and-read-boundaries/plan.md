@@ -925,35 +925,35 @@ repository secrets at all.
 
 #### Automated
 
-- [x] 2.1 Unit tests pass, including both DST transition cases: `npm run test:unit`
-- [x] 2.2 The parity test confirms `scripts/lib/wall-clock.mjs` and `src/lib/wall-clock.ts` agree across the fixed instant set
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Type checking passes: `npx astro check`
-- [x] 2.5 Scope gates pass with re-derived counts: `npm run gate:scope`
-- [x] 2.6 The smoke walk still runs and still reports all 38 steps passing, against a local preview with a local Supabase stack: `npm run smoke`
+- [x] 2.1 Unit tests pass, including both DST transition cases: `npm run test:unit` — 3740884
+- [x] 2.2 The parity test confirms `scripts/lib/wall-clock.mjs` and `src/lib/wall-clock.ts` agree across the fixed instant set — 3740884
+- [x] 2.3 Linting passes: `npm run lint` — 3740884
+- [x] 2.4 Type checking passes: `npx astro check` — 3740884
+- [x] 2.5 Scope gates pass with re-derived counts: `npm run gate:scope` — 3740884
+- [x] 2.6 The smoke walk still runs and still reports all 38 steps passing, against a local preview with a local Supabase stack: `npm run smoke` — 3740884
 
 #### Manual
 
-- [x] 2.7 `npm run smoke` output was read, not just exit-checked — confirm it printed `All 38 smoke steps passed` rather than exiting 0 over an unexecuted walk
-- [x] 2.8 The future-date and backdated smoke steps still pass, confirming the predicate extraction preserved behaviour
-- [x] 2.9 The tolerance comment explaining the Worker clock survived the move
+- [x] 2.7 `npm run smoke` output was read, not just exit-checked — confirm it printed `All 38 smoke steps passed` rather than exiting 0 over an unexecuted walk — 3740884
+- [x] 2.8 The future-date and backdated smoke steps still pass, confirming the predicate extraction preserved behaviour — 3740884
+- [x] 2.9 The tolerance comment explaining the Worker clock survived the move — 3740884
 
 ### Phase 3: The integration harness and the three read boundaries
 
 #### Automated
 
-- [ ] 3.1 Integration tests pass against a local stack: `npm run test:int`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Type checking passes: `npx astro check`
-- [ ] 3.4 Scope gates pass with re-derived counts: `npm run gate:scope`
-- [ ] 3.5 Unit tests still pass: `npm run test:unit`
+- [x] 3.1 Integration tests pass against a local stack: `npm run test:int`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Type checking passes: `npx astro check`
+- [x] 3.4 Scope gates pass with re-derived counts: `npm run gate:scope`
+- [x] 3.5 Unit tests still pass: `npm run test:unit`
 
 #### Manual
 
-- [ ] 3.6 Mutation check: breaking each of the three queries under test makes the corresponding test fail, and all three edits were reverted
-- [ ] 3.7 Run `npm run test:int` twice in a row against the same local database and confirm both runs pass, proving teardown is idempotent
-- [ ] 3.8 Confirm no row outside the reserved fixture id prefix was deleted or modified
-- [ ] 3.9 Confirm no file under `src/` references the service-role key
+- [x] 3.6 Mutation check: breaking each of the three queries under test makes the corresponding test fail, and all three edits were reverted
+- [x] 3.7 Run `npm run test:int` twice in a row against the same local database and confirm both runs pass, proving teardown is idempotent
+- [x] 3.8 Confirm no row outside the reserved fixture id prefix was deleted or modified
+- [x] 3.9 Confirm no file under `src/` references the service-role key
 
 ### Phase 4: Seat the suite in the gates
 

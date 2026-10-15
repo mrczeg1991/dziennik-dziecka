@@ -1,0 +1,295 @@
+// The fixture harness for tests/integration. Every expected set in this directory is derived from a
+// fixture declared here and never from re-running the query under test -- §2 of
+// context/foundation/test-plan.md names that substitution as the anti-pattern for these risks: a
+// test that asks the subject what the answer is agrees with it by construction.
+//
+// Three things about this file are deliberate and load-bearing:
+//
+//   * The service-role key is read here and nowhere under `src/`. Seeding has to bypass RLS (the
+//     pgTAP fixtures do the same one layer down, as `postgres`), and reading back has to NOT bypass
+//     it -- so the harness hands out two different clients and names which is which.
+//   * Absent credentials FAIL, they do not skip (§6.6). A suite that silently no-ops when the local
+//     stack is down reports green having asserted nothing: Risk #7 wearing Risk #1's clothes.
+//   * Teardown deletes BY ID, never by truncation, and runs before the seed as well as after it. A
+//     dirty local database or a previously failed run would otherwise make a suite pass or fail for
+//     a reason that has nothing to do with the code -- and because every id is checked against the
+//     reserved prefix below, no row a human created is reachable by a delete issued from here.
+
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+import type { SupabaseServerClient } from "@/lib/children";
+
+const URL_ENV = "SUPABASE_URL";
+const ANON_KEY_ENV = "SUPABASE_ANON_KEY";
+const SERVICE_ROLE_KEY_ENV = "SUPABASE_SERVICE_ROLE_KEY";
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (value === undefined || value === "") {
+    throw new Error(
+      [
+        `${name} is not set, so this suite has no database to run against.`,
+        "Absent credentials fail, they do not skip -- a suite that no-ops here would report green",
+        "having asserted nothing. Start the local stack and export all three values:",
+        "",
+        "  supabase start",
+        "  supabase status -o env",
+        "",
+        `  ${URL_ENV}              <- API_URL`,
+        `  ${ANON_KEY_ENV}         <- ANON_KEY`,
+        `  ${SERVICE_ROLE_KEY_ENV} <- SERVICE_ROLE_KEY`,
+        "",
+        "Then: npm run test:int",
+      ].join("\n"),
+    );
+  }
+  return value;
+}
+
+// No session storage and no refresh timer on either client: these processes are short-lived, and a
+// background refresh interval keeps the Vitest worker alive past the last assertion.
+const CLIENT_OPTIONS = { auth: { persistSession: false, autoRefreshToken: false } };
+
+let cachedServiceClient: SupabaseClient | null = null;
+
+/**
+ * The service-role client. It bypasses RLS, so it is used for exactly three things -- seeding a
+ * fixture, deleting it again, and reading a complete row back in the one test whose subject is
+ * which columns an update wrote. It is never the client a query under test runs on: that would
+ * exercise the query with every policy switched off.
+ */
+export function serviceClient(): SupabaseClient {
+  cachedServiceClient ??= createClient(requireEnv(URL_ENV), requireEnv(SERVICE_ROLE_KEY_ENV), CLIENT_OPTIONS);
+  return cachedServiceClient;
+}
+
+// Every id this directory touches starts here. The shape mirrors the readable-id style of
+// supabase/tests/02_notes_characterization.sql:29-59 -- a fixed, reserved space rather than
+// generated uuids, so a row is identifiable as a fixture by looking at it, a failed run leaves
+// nothing a later run cannot find, and the delete surface is auditable from this file alone.
+// `f1c7` reads as "fixture"; the digit after the zeros gives each suite its own id space, which is
+// what lets the two suites in this directory run in parallel without deleting each other's rows.
+export const FIXTURE_ID_PREFIX = "f1c70000-0000-0000-0000-";
+
+const FIXTURE_PASSWORD = "integration-fixture-password";
+
+export const READ_BOUNDARY_IDS = {
+  user: `${FIXTURE_ID_PREFIX}000010000001`,
+  firstChild: `${FIXTURE_ID_PREFIX}0000100000c1`,
+  secondChild: `${FIXTURE_ID_PREFIX}0000100000c2`,
+  firstChildLiveNote: `${FIXTURE_ID_PREFIX}00001000c101`,
+  firstChildSecondLiveNote: `${FIXTURE_ID_PREFIX}00001000c102`,
+  firstChildDeletedNote: `${FIXTURE_ID_PREFIX}00001000c1d1`,
+  secondChildLiveNote: `${FIXTURE_ID_PREFIX}00001000c201`,
+};
+
+export const EDIT_SCOPE_IDS = {
+  user: `${FIXTURE_ID_PREFIX}000020000001`,
+  child: `${FIXTURE_ID_PREFIX}0000200000c1`,
+  note: `${FIXTURE_ID_PREFIX}00002000c101`,
+};
+
+export interface ChildSeed {
+  id: string;
+  name: string;
+}
+
+export interface NoteSeed {
+  id: string;
+  childId: string;
+  /** A bare wall clock, `YYYY-MM-DDTHH:mm`: `notes.occurred_at` is `timestamp` without a zone. */
+  occurredAt: string;
+  content: string;
+  /** Soft-deleted on seed. The owner is unchanged -- that is the point of the exclusion test. */
+  deleted?: boolean;
+}
+
+export interface Fixture {
+  email: string;
+  password: string;
+  userId: string;
+  children: ChildSeed[];
+  notes: NoteSeed[];
+}
+
+// A fixed instant rather than `now()`, so nothing in a seeded row depends on when the suite ran.
+const SEEDED_DELETED_AT = "2026-01-01T00:00:00.000Z";
+
+/**
+ * One account, two children, three notes on the first child -- two live and one soft-deleted -- and
+ * one note on the second child. The soft-deleted note and the second child's note carry the two
+ * LATEST `occurred_at` values of the set, so a query missing either filter does not merely return an
+ * extra row: it returns it at the head of a list ordered by occurrence.
+ */
+export const READ_BOUNDARY_FIXTURE: Fixture = {
+  email: "read-boundaries.fixture@example.com",
+  password: FIXTURE_PASSWORD,
+  userId: READ_BOUNDARY_IDS.user,
+  children: [
+    { id: READ_BOUNDARY_IDS.firstChild, name: "First fixture child" },
+    { id: READ_BOUNDARY_IDS.secondChild, name: "Second fixture child" },
+  ],
+  notes: [
+    {
+      id: READ_BOUNDARY_IDS.firstChildLiveNote,
+      childId: READ_BOUNDARY_IDS.firstChild,
+      occurredAt: "2026-07-15T10:30",
+      content: "live note on the first child",
+    },
+    {
+      id: READ_BOUNDARY_IDS.firstChildSecondLiveNote,
+      childId: READ_BOUNDARY_IDS.firstChild,
+      occurredAt: "2026-07-16T08:00",
+      content: "second live note on the first child",
+    },
+    {
+      id: READ_BOUNDARY_IDS.firstChildDeletedNote,
+      childId: READ_BOUNDARY_IDS.firstChild,
+      occurredAt: "2026-07-17T09:00",
+      content: "soft-deleted note on the first child",
+      deleted: true,
+    },
+    {
+      id: READ_BOUNDARY_IDS.secondChildLiveNote,
+      childId: READ_BOUNDARY_IDS.secondChild,
+      occurredAt: "2026-07-18T11:00",
+      content: "live note on the second child",
+    },
+  ],
+};
+
+/** One account, one child, one live note -- the row whose columns an edit must leave alone. */
+export const EDIT_SCOPE_FIXTURE: Fixture = {
+  email: "edit-scope.fixture@example.com",
+  password: FIXTURE_PASSWORD,
+  userId: EDIT_SCOPE_IDS.user,
+  children: [{ id: EDIT_SCOPE_IDS.child, name: "Edit-scope fixture child" }],
+  notes: [
+    {
+      id: EDIT_SCOPE_IDS.note,
+      childId: EDIT_SCOPE_IDS.child,
+      occurredAt: "2026-07-15T10:30",
+      content: "the text this note carried before the edit",
+    },
+  ],
+};
+
+// The reserved prefix is what makes the deletes below safe to run against a developer's own local
+// database, so it is asserted rather than assumed. A typo in one id would otherwise widen the delete
+// surface silently -- and §6.6 records the silent direction as the dangerous one.
+function assertReserved(fixture: Fixture): void {
+  const ids = [fixture.userId, ...fixture.children.map((child) => child.id), ...fixture.notes.map((note) => note.id)];
+  const strays = ids.filter((id) => !id.startsWith(FIXTURE_ID_PREFIX));
+  if (strays.length > 0) {
+    throw new Error(
+      `fixture ids must start with the reserved prefix ${FIXTURE_ID_PREFIX}; refusing to touch: ${strays.join(", ")}`,
+    );
+  }
+}
+
+/** Seeds the fixture with the service-role client. Call `teardownFixture` first, always. */
+export async function seedFixture(fixture: Fixture): Promise<void> {
+  assertReserved(fixture);
+  const service = serviceClient();
+
+  // A fixed id, through the admin API rather than a direct insert into `auth.users`: the pgTAP
+  // fixtures insert that row themselves because they switch role inside one transaction, but a row
+  // inserted that way carries no password, and this harness has to be able to sign in.
+  const createdUser = await service.auth.admin.createUser({
+    id: fixture.userId,
+    email: fixture.email,
+    password: fixture.password,
+    email_confirm: true,
+  });
+  if (createdUser.error) {
+    throw createdUser.error;
+  }
+
+  const insertedChildren = await service.from("children").insert(
+    fixture.children.map((child) => ({
+      id: child.id,
+      user_id: fixture.userId,
+      name: child.name,
+    })),
+  );
+  if (insertedChildren.error) {
+    throw insertedChildren.error;
+  }
+
+  const insertedNotes = await service.from("notes").insert(
+    fixture.notes.map((note) => ({
+      id: note.id,
+      user_id: fixture.userId,
+      child_id: note.childId,
+      content: note.content,
+      occurred_at: note.occurredAt,
+      deleted_at: note.deleted === true ? SEEDED_DELETED_AT : null,
+    })),
+  );
+  if (insertedNotes.error) {
+    throw insertedNotes.error;
+  }
+}
+
+/**
+ * Removes the fixture. Idempotent in both directions: already-absent rows and an already-absent user
+ * are the expected state on a clean database, which is what lets this run before the seed as well as
+ * after it. Deletes name ids explicitly -- no truncate, and no predicate wide enough to reach a row
+ * this file did not create.
+ */
+export async function teardownFixture(fixture: Fixture): Promise<void> {
+  assertReserved(fixture);
+  const service = serviceClient();
+
+  const deletedNotes = await service
+    .from("notes")
+    .delete()
+    .in(
+      "id",
+      fixture.notes.map((note) => note.id),
+    );
+  if (deletedNotes.error) {
+    throw deletedNotes.error;
+  }
+
+  const deletedChildren = await service
+    .from("children")
+    .delete()
+    .in(
+      "id",
+      fixture.children.map((child) => child.id),
+    );
+  if (deletedChildren.error) {
+    throw deletedChildren.error;
+  }
+
+  const deletedUser = await service.auth.admin.deleteUser(fixture.userId);
+  // 404 is "there was no such user", which is a completed teardown, not a failure.
+  if (deletedUser.error && deletedUser.error.status !== 404) {
+    throw deletedUser.error;
+  }
+}
+
+/**
+ * An anon client signed in as the fixture user -- RLS live, exactly as a request from the browser
+ * sees it. A fresh client per call, never a cached one: signing in mutates the client's auth state,
+ * so two fixtures sharing one client would each end up holding the other's session.
+ *
+ * No cast is needed, and that is worth recording: `SupabaseServerClient` is the return type of
+ * `@supabase/ssr`'s `createServerClient` (src/lib/children.ts:4), and `@supabase/ssr` declares
+ * `@supabase/supabase-js` as a peer rather than bundling its own copy, so both factories return the
+ * same `SupabaseClient` class. The two differ only in where the session is kept -- cookies rather
+ * than memory. What a test cannot do is build the real thing: `src/lib/supabase.ts` imports
+ * `astro:env/server`, which does not resolve outside an Astro build.
+ */
+export async function signInAsFixtureUser(fixture: Fixture): Promise<SupabaseServerClient> {
+  const anon = createClient(requireEnv(URL_ENV), requireEnv(ANON_KEY_ENV), CLIENT_OPTIONS);
+  const { error } = await anon.auth.signInWithPassword({
+    email: fixture.email,
+    password: fixture.password,
+  });
+  if (error) {
+    throw error;
+  }
+  return anon;
+}
