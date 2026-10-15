@@ -151,7 +151,18 @@ phase lands; before that, the gate is planned.
 | route-guard coverage                             | CI (`ci` job) + Cloudflare build command         | required — wired          | Risk #2 — a data-touching route never added to the guard list                |
 | build-output secret scan                         | CI (both jobs) + Cloudflare build command        | required — wired          | Risk #6 — a secret reaching the client bundle (note bodies cannot: see §6.4) |
 | migration-drift check against the linked project | Cloudflare build command + scheduled CI sweep    | required — wired          | Risk #3 — deployed code expecting a schema the hosted database does not have |
-| unit + integration                               | local + CI                                       | required after §3 Phase 3 | Risk #5, #4 — boundary and column-scope logic no HTTP test can reach         |
+| unit + integration                               | local + CI                                       | required — wired          | Risk #5, #4 — boundary and column-scope logic no HTTP test can reach         |
+
+**That last row is wired asymmetrically, and only half of it can block a
+deploy.** The unit suite is in the blocking seat: `gate:scope` floors the number
+of passing unit tests and refuses to report a count at all from a failing run,
+and `gate:scope` runs inside `npm run gates`, which Cloudflare's build command
+calls — a non-zero exit there publishes nothing. The integration suite needs a
+migrated database, which that seat does not have, so it runs only in CI's
+`smoke` job, and GitHub Actions is advisory on this repository (see §6.6: no
+branch protection, so a red run stops no merge). So unit tests can stop a
+deploy; integration tests cannot, and will not until branch protection exists or
+a database is reachable from the build command.
 
 A post-edit hook in the local agent loop is **recommended, not required**,
 and is never a substitute for a CI gate. No rollout phase above wires it;

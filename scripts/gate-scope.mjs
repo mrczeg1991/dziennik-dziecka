@@ -9,9 +9,16 @@
 // take the lint gate green over most of the codebase. So the instrument here is a floor on
 // reported scope, not an abort detector.
 //
+// The same instrument, applied to the test runner: a suite that ran 3 assertions instead of 35
+// also exits 0 and also looks exactly like a green run, so the third counter floors the number of
+// passing unit tests. context/foundation/lessons.md records the ESLint-scope ancestor of this
+// reasoning -- floor the reported quantity, because the enforcing layer cannot be asked whether it
+// really checked.
+//
 // Zero dependencies, same as scripts/smoke.mjs. Run it with: npm run gate:scope
 
 import { spawnSync } from "node:child_process";
+import { readFileSync, rmSync } from "node:fs";
 
 const EXPECTED = {
   // npx eslint . -f json  -> array length. Exact: ESLint's scope is .gitignore-driven and
@@ -24,6 +31,11 @@ const EXPECTED = {
   // ESLint count rather than level with it: tsconfig.json includes .astro/types.d.ts, which astro
   // check counts and ESLint skips because .gitignore ignores .astro/.
   astroCheckFiles: { mode: "floor", value: 48 },
+  // npx vitest run tests/unit --reporter=json -> numPassedTests. Floor, not exact: tests are added
+  // far more often than removed, and an exact count would make every new test a two-file commit
+  // for no gain -- the direction that matters is a suite quietly getting smaller. 35 passing tests
+  // in one file when this was derived (§3 Phase 3).
+  unitTestsPassed: { mode: "floor", value: 35 },
 };
 
 function run(command) {
@@ -66,13 +78,74 @@ function countAstroCheckFiles() {
   return { command, count: Number(match[1]), detail: null };
 }
 
+// Three things differ from the two counters above, all three load-bearing:
+//
+//  1. The JSON reporter does not write to stdout. It needs --outputFile, and the file is read back;
+//     a missing or unparseable file is a null count, i.e. a failure, which is also what a crashed
+//     run looks like. The previous run's report is deleted first, so a crash can never be scored
+//     against a stale file.
+//  2. numPassedTests, not numTotalTests. A test converted to .todo or .skip still counts in the
+//     total, so flooring the total would let a deletion hide behind a skip. numTotalTestSuites is
+//     deliberately not floored as well: it counts describe blocks (6 for one file), so it would
+//     fail on a harmless regrouping, and a whole file dropping out already takes its passing tests
+//     with it.
+//  3. The exit code is NOT ignored here. For ESLint and astro check a non-zero exit means "found
+//     problems" and another gate owns those findings. Nothing else inside `npm run gates` runs the
+//     unit suite, so a gate that shrugged at a failing run would let a red suite deploy. A run
+//     reporting failures therefore reports no count at all.
+//
+// Unit only, deliberately: gate:scope runs inside `npm run gates`, which Cloudflare's build command
+// calls, and that environment has no database. The integration suite is CI-only -- see the `smoke`
+// job in .github/workflows/ci.yml. The cost is that gate:scope is now as slow as the unit suite,
+// because --reporter=json still runs every test; that is accepted.
+function countUnitTestsPassed() {
+  // Inside .vitest/, which .gitignore already excludes -- an untracked, unignored report file would
+  // move the eslintFiles count above between runs.
+  const report = ".vitest/json/gate-scope.json";
+  const command = `npx vitest run tests/unit --reporter=json --outputFile=${report}`;
+  rmSync(report, { force: true });
+  const { spawned, detail, status } = run(command);
+  if (!spawned) return { command, count: null, detail };
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync(report, "utf8"));
+  } catch (error) {
+    return { command, count: null, detail: `${report} is missing or unparseable (exit ${status}): ${error.message}` };
+  }
+  if (typeof parsed.numPassedTests !== "number") {
+    return { command, count: null, detail: `${report} carried no numPassedTests (exit ${status})` };
+  }
+  if (parsed.success !== true || parsed.numFailedTests > 0) {
+    return {
+      command,
+      count: null,
+      detail: `the suite itself failed -- ${parsed.numFailedTests} of ${parsed.numTotalTests} test(s) (exit ${status}); a failing run has no scope worth flooring`,
+    };
+  }
+  return { command, count: parsed.numPassedTests, detail: null };
+}
+
+const SCOPE_HINT = "check .gitignore, eslint.config.js ignores and tsconfig includes for a newly excluded path.";
+
 const GATES = [
-  { key: "eslintFiles", label: "eslint examined files", measure: countEslintFiles },
-  { key: "astroCheckFiles", label: "astro check examined files", measure: countAstroCheckFiles },
+  { key: "eslintFiles", label: "eslint examined files", measure: countEslintFiles, shrinkHint: SCOPE_HINT },
+  {
+    key: "astroCheckFiles",
+    label: "astro check examined files",
+    measure: countAstroCheckFiles,
+    shrinkHint: SCOPE_HINT,
+  },
+  {
+    key: "unitTestsPassed",
+    label: "unit tests passed",
+    measure: countUnitTestsPassed,
+    shrinkHint:
+      "check for a deleted or renamed test file, a test turned into .skip or .todo, and vitest.config.ts include/exclude changes.",
+  },
 ];
 
 let failed = 0;
-for (const { key, label, measure } of GATES) {
+for (const { key, label, measure, shrinkHint } of GATES) {
   const { mode, value } = EXPECTED[key];
   const { command, count, detail } = measure();
 
@@ -96,7 +169,7 @@ for (const { key, label, measure } of GATES) {
       console.log(
         `      scope shrank by ${value - count}: the gate ran, but over less of the repository than expected.`,
       );
-      console.log(`      check .gitignore, eslint.config.js ignores and tsconfig includes for a newly excluded path.`);
+      console.log(`      ${shrinkHint}`);
     } else {
       console.log(`      scope grew by ${count - value}, and EXPECTED.${key} is exact.`);
       console.log(`      if the new files are meant to be in scope, bump EXPECTED.${key} to ${count} in this commit.`);

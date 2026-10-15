@@ -24,8 +24,12 @@ jobs:
       - run: npx astro sync
       - run: npm run lint
       - run: npx astro check
-      # Placed after the two tools whose reported scope it floors, so a run that examined a
-      # fraction of the repository and exited 0 fails here instead of passing silently.
+      # Unit only: the integration suite needs a migrated database, which this job has no part of.
+      # It runs in the `smoke` job below.
+      - run: npm run test:unit
+      # Placed after the three tools whose reported scope it floors, so a run that examined a
+      # fraction of the repository -- or a suite that ran a fraction of its tests -- and exited 0
+      # fails here instead of passing silently.
       - run: npm run gate:scope
       # Needs neither a server nor a build, so it runs before the build is paid for.
       - run: npm run gate:routes
@@ -61,12 +65,28 @@ jobs:
       - name: Start local Supabase
         run: |
           supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
-          supabase status -o env | grep -E '^(API_URL|ANON_KEY)=' > supabase.env
-      # Position is load-bearing: the database is migrated and holds zero rows
-      # only here. After the smoke walk below it holds whatever that walk left
-      # behind — scripts/smoke.mjs performs no cleanup.
+          supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' > supabase.env
+      # Position is load-bearing, and two steps now depend on it: the database
+      # is migrated and holds zero rows only here. After the smoke walk below it
+      # holds whatever that walk left behind — scripts/smoke.mjs performs no
+      # cleanup. The policy tests roll each file back, and the integration suite
+      # seeds and deletes by a reserved id prefix, so neither strictly requires
+      # an empty database; both sit here anyway so that a failure is about the
+      # code under test and not about residue, and so neither is skipped when a
+      # later step fails. Do not move either below the walk.
       - name: Run database policy tests
         run: supabase test db
+      # The only job with a migrated database, so the only place this suite can
+      # run. tests/integration/fixtures.ts requires all three names and throws
+      # (never skips) if one is absent; `supabase status -o env` emits them under
+      # different names, hence the mapping.
+      - name: Run integration tests
+        run: |
+          source supabase.env
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_ANON_KEY="$ANON_KEY" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+            npm run test:int
       - name: Configure secrets for build and preview
         run: |
           source supabase.env
