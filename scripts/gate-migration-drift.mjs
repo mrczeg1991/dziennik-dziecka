@@ -25,6 +25,13 @@ const MIGRATIONS_DIR = "supabase/migrations";
 const VERSION_PREFIX = /^(\d{14})_.*\.sql$/;
 const REF_ENV = "SUPABASE_PROJECT_REF";
 const PASSWORD_ENV = "SUPABASE_DB_PASSWORD";
+// The ref and the password address the project and open its database; neither authenticates the
+// CLI to the platform API that `migration list` actually calls. Observed 2026-10-15 in the
+// scheduled CI sweep: with the first two set and this one absent, the CLI exits having printed
+// {"_tag":"Error","error":{"code":"LegacyPlatformAuthRequiredError",...}} -- caught by the shape
+// check far below, but reported there as an unreadable verdict rather than as a missing secret.
+// It is a credential, so it belongs in the precheck with the other two.
+const ACCESS_TOKEN_ENV = "SUPABASE_ACCESS_TOKEN";
 
 function fail(lines) {
   for (const line of lines) console.log(line);
@@ -36,13 +43,20 @@ function fail(lines) {
 // checking nothing at all.
 const projectRef = process.env[REF_ENV];
 const dbPassword = process.env[PASSWORD_ENV];
-const missing = [...(projectRef ? [] : [REF_ENV]), ...(dbPassword ? [] : [PASSWORD_ENV])];
+const accessToken = process.env[ACCESS_TOKEN_ENV];
+const missing = [
+  ...(projectRef ? [] : [REF_ENV]),
+  ...(dbPassword ? [] : [PASSWORD_ENV]),
+  ...(accessToken ? [] : [ACCESS_TOKEN_ENV]),
+];
 if (missing.length > 0) {
   fail([
-    `FAIL  migration drift: ${missing.join(" and ")} ${missing.length === 1 ? "is" : "are"} not set`,
+    `FAIL  migration drift: ${missing.length === 1 ? `${missing[0]} is` : `${missing.join(", ")} are`} not set`,
     `      this is a failure, not a skip: a drift gate that no-ops on a missing secret reports`,
     `      green from the deploy path while checking nothing.`,
-    `      set both and re-run, or remove this gate from the deploy path deliberately.`,
+    `      set all three and re-run, or remove this gate from the deploy path deliberately.`,
+    `      ${ACCESS_TOKEN_ENV} is a personal access token from the Supabase dashboard; the CLI`,
+    `      reads it from the environment, so nothing is passed on the command line.`,
     `\n1 migration-drift problem(s)`,
   ]);
 }
@@ -133,6 +147,20 @@ try {
     `      command: ${redactedCommand}`,
     `      stdout: ${JSON.stringify(stdout.slice(0, 400))}`,
     `      stderr: ${JSON.stringify((result.stderr ?? "").slice(0, 400))}`,
+    `\n1 migration-drift problem(s)`,
+  ]);
+}
+
+// The CLI reports its own failures as {"_tag":"Error","error":{"code","message"}} on stdout. That
+// is a well-formed answer to a question the gate never got to ask, not an unrecognised shape, and
+// saying so is the difference between "fix the secret" and "the CLI's JSON changed".
+if (payload !== null && typeof payload === "object" && payload._tag === "Error") {
+  fail([
+    `FAIL  migration drift: the Supabase CLI refused the request`,
+    `      code: ${payload.error?.code ?? "(none reported)"}`,
+    `      message: ${payload.error?.message ?? "(none reported)"}`,
+    `      command: ${redactedCommand}`,
+    `      no verdict was obtained, so this gate fails rather than reporting agreement.`,
     `\n1 migration-drift problem(s)`,
   ]);
 }

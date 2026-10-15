@@ -135,3 +135,8 @@ jobs:
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          # `supabase migration list` against a hosted project needs a logged-in CLI on top of the
+          # ref and the password: without it the CLI answers LegacyPlatformAuthRequiredError, which
+          # this gate reports as an unparseable verdict rather than as "no drift". The gate's own
+          # credential precheck names it now, so an absent secret fails on the first line.
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
