@@ -838,6 +838,53 @@ on S-03.
 - Everything still passes after the documentation pass:
   `npm run test:unit && npm run test:int && npm run gates`
 
+**Verification note (2026-10-15), criterion 5.3.** Measured, with the same
+member-by-member treatment of `npm run gates` as Phases 1 and 4: `gate:scope`
+(47 exact / 48 floor / 35 floor), `gate:routes` (4 assertions over 12 routes),
+`build`, and `gate:build-output` (17 files, clean) all pass; `gate:drift` fails
+locally because `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` and
+`SUPABASE_ACCESS_TOKEN` are not set here, which §6.6 requires to be a failure
+rather than a skip. Unlike the earlier phases, that member is no longer merely
+unrunnable-and-assumed: run 38811290402 ran it against the hosted project the
+same day and read `PASS  migrations agree: 2 version(s) applied both sides`.
+`npm run test:unit` reports 35 passing and `npm run test:int` 6, against a
+local stack restarted for this phase. `npm run lint` and `npx astro check` were
+also re-run (0 errors) although this phase edits only prettier-ignored Markdown
+under `context/`, which neither tool reads.
+
+The deliberate-break check does not apply to this phase: it adds and changes no
+tests. The suites it documents were break-checked in Phases 2 and 3 — nine red
+tests for a retargeted zone, four for a tolerance resolved in UTC, and two apiece
+for the dropped soft-delete and cross-child filters.
+
+**Verification note (2026-10-15), criteria 5.4 and 5.5.** Measured by blind
+read, not by self-assessment: three successive agents with no other context were
+given §6.2 and §6.3 and forbidden to open any other file or section — the same
+instrument as `testing-gates-that-gate`'s blind walk (commit `9619156`). The
+first run answered all eight cookbook questions ANSWERED, so 5.4 held
+immediately, but returned **NO** on 5.5 for a new integration suite, naming
+blockers that were real: §6.2 contradicted itself on whether an additive change
+raises the `unitTestsPassed` floor, deferred the derivation method to a section
+the reader could not open, said "one of the three counters" while naming two,
+and §6.3 described a fixture contract without the users' identity, the id-space
+allocation rule, the seed entry point, or any way to get the three environment
+values into a process. The second run landed the unit-test commit but still
+could not author a third suite: the `Fixture` shape was unauthorable and the
+text said it bundles "email, password and the rows to seed" while seeding passed
+a reserved user id explicitly — `Fixture` has a `userId` field, so that sentence
+was simply wrong. The third run returned **COULD LAND**, **COULD AUTHOR** and
+**COULD RUN**, and wrote out a complete fixture declaration with every field
+filled from the text alone.
+
+Two documented commands were executed rather than written from memory. The first
+PowerShell recipe for the three environment values used `ConvertFrom-StringData`
+and was **wrong** — `supabase status -o env` double-quotes every value, so it
+assigned the quotes along with the URL; the replacement was run and `npm run
+test:int` reported 6 passing. Both `eslintFiles` re-derivation one-liners were
+run and print 47. `supabase start` was confirmed to apply the migrations itself,
+so the cookbook's claim that no `db reset` step is needed is observed rather
+than assumed.
+
 #### Manual Verification:
 
 - §6.2 and §6.3 each answer all four cookbook questions — location, naming,
@@ -1017,13 +1064,13 @@ repository secrets at all.
 
 #### Automated
 
-- [ ] 5.1 No placeholder remains: `grep -c "TBD — see §3 Phase 3" context/foundation/test-plan.md` returns 0
-- [ ] 5.2 §3 Phase 3's row reads `complete`
-- [ ] 5.3 Everything still passes after the documentation pass: `npm run test:unit && npm run test:int && npm run gates`
+- [x] 5.1 No placeholder remains: `grep -c "TBD — see §3 Phase 3" context/foundation/test-plan.md` returns 0
+- [x] 5.2 §3 Phase 3's row reads `complete`
+- [x] 5.3 Everything still passes after the documentation pass: `npm run test:unit && npm run test:int && npm run gates`
 
 #### Manual
 
-- [ ] 5.4 §6.2 and §6.3 each answer all four cookbook questions — location, naming, reference test, run command — without the reader opening another file
-- [ ] 5.5 Hand §6.2 and §6.3 to a reader unfamiliar with the project and confirm they could add a test from those sections alone
-- [ ] 5.6 §6.6's note records findings, not a restatement of this plan
-- [ ] 5.7 §4's row carries a `checked:` date and names whichever config route was actually used
+- [x] 5.4 §6.2 and §6.3 each answer all four cookbook questions — location, naming, reference test, run command — without the reader opening another file
+- [x] 5.5 Hand §6.2 and §6.3 to a reader unfamiliar with the project and confirm they could add a test from those sections alone
+- [x] 5.6 §6.6's note records findings, not a restatement of this plan
+- [x] 5.7 §4's row carries a `checked:` date and names whichever config route was actually used

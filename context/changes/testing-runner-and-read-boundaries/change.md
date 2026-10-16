@@ -3,7 +3,7 @@ change_id: testing-runner-and-read-boundaries
 title: Testing runner and read boundaries
 status: implementing
 created: 2026-10-11
-updated: 2026-10-12
+updated: 2026-10-15
 archived_at: null
 ---
 
