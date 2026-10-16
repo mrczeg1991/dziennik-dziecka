@@ -1064,13 +1064,13 @@ repository secrets at all.
 
 #### Automated
 
-- [x] 5.1 No placeholder remains: `grep -c "TBD — see §3 Phase 3" context/foundation/test-plan.md` returns 0
-- [x] 5.2 §3 Phase 3's row reads `complete`
-- [x] 5.3 Everything still passes after the documentation pass: `npm run test:unit && npm run test:int && npm run gates`
+- [x] 5.1 No placeholder remains: `grep -c "TBD — see §3 Phase 3" context/foundation/test-plan.md` returns 0 — e031323
+- [x] 5.2 §3 Phase 3's row reads `complete` — e031323
+- [x] 5.3 Everything still passes after the documentation pass: `npm run test:unit && npm run test:int && npm run gates` — e031323
 
 #### Manual
 
-- [x] 5.4 §6.2 and §6.3 each answer all four cookbook questions — location, naming, reference test, run command — without the reader opening another file
-- [x] 5.5 Hand §6.2 and §6.3 to a reader unfamiliar with the project and confirm they could add a test from those sections alone
-- [x] 5.6 §6.6's note records findings, not a restatement of this plan
-- [x] 5.7 §4's row carries a `checked:` date and names whichever config route was actually used
+- [x] 5.4 §6.2 and §6.3 each answer all four cookbook questions — location, naming, reference test, run command — without the reader opening another file — e031323
+- [x] 5.5 Hand §6.2 and §6.3 to a reader unfamiliar with the project and confirm they could add a test from those sections alone — e031323
+- [x] 5.6 §6.6's note records findings, not a restatement of this plan — e031323
+- [x] 5.7 §4's row carries a `checked:` date and names whichever config route was actually used — e031323
