@@ -11,12 +11,16 @@
 // Astro virtual module.
 import { fileURLToPath } from "node:url";
 
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     // A node environment rather than a browser one; no test here needs a DOM.
     environment: "node",
+    // .claude/worktrees/ holds full second checkouts (see scripts/gate-routes.mjs), and Vitest
+    // neither reads .gitignore nor anchors the `tests/unit` filter, so a worktree's tests would be
+    // counted by gate:scope's floor and its integration suites would race this one's fixtures.
+    exclude: [...configDefaults.exclude, ".claude/**"],
     // Mirrors tsconfig.json's `"@/*": ["./src/*"]`. The key is `@` and not `@/`: Vite's alias
     // matcher takes a string `find` as an exact segment prefix, so `@/` only ever matches `@//`
     // and the specifier falls through to Node's resolver ("Cannot find package '@/lib/...'").

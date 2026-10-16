@@ -19,7 +19,7 @@
     "gates:post": "npm run gate:build-output",
     "gates": "npm run gates:pre && npm run build && npm run gates:post",
     "test:unit": "vitest run tests/unit",
-    "test:int": "vitest run tests/integration",
+    "test:int": "vitest run tests/integration --no-file-parallelism",
     "test": "npm run test:unit && npm run test:int",
     "test:db": "supabase test db",
     "prepare": "husky"

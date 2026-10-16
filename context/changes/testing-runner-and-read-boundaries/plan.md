@@ -1056,8 +1056,8 @@ repository secrets at all.
 
 #### Manual
 
-- [x] 4.5 Push a branch and confirm the `ci` job runs `test:unit`, and that a PR into `master` runs `test:int` in the `smoke` job — d9339ef
-- [x] 4.6 Confirm the `smoke` job's integration step ran against an empty database — its output should show the fixture teardown finding nothing to remove on the first run — d9339ef
+- [x] 4.5 Push a branch and confirm the `ci` job runs `test:unit`, and that a PR into `master` runs `test:int` in the `smoke` job — d9339ef (see verification note)
+- [x] 4.6 Confirm the `smoke` job's integration step ran against an empty database — its output should show the fixture teardown finding nothing to remove on the first run — d9339ef (see verification note)
 - [x] 4.7 Read §5's new sentence and confirm it states plainly which half can block a deploy and which cannot — d9339ef
 
 ### Phase 5: Close the contract — write the cookbook

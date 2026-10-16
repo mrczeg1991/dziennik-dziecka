@@ -88,7 +88,8 @@ zacommitował migracji). Bramka jest częścią `npm run gates`, czyli build com
 deploy z brakującą migracją **nie opublikuje się**. Objaw, który wcześniej to przepuszczał, to
 HTTP 200 z polskim banerem „nie udało się wczytać” — zielony smoke test tego nie łapał.
 
-Wymaga `SUPABASE_PROJECT_REF` i `SUPABASE_DB_PASSWORD`. Brak któregokolwiek to **błąd, nie
+Wymaga `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` i `SUPABASE_ACCESS_TOKEN` (bez tokenu CLI
+odmawia `migration list` — zaobserwowane 2026-10-15). Brak któregokolwiek to **błąd, nie
 pominięcie** — bramka, która po cichu nic nie sprawdza, jest gorsza od jej braku.
 
 ### 7. Build i deploy
@@ -145,6 +146,7 @@ produkcyjnym (`master`), nie na preview.
 | Deploy command | Build configuration | bez zmian (domyślnie `npx wrangler deploy`) |
 | `SUPABASE_PROJECT_REF` | Build variables and secrets | `ojhtrttucvuthgxxmpce` |
 | `SUPABASE_DB_PASSWORD` | Build variables and secrets, **jako secret** | hasło do bazy |
+| `SUPABASE_ACCESS_TOKEN` | Build variables and secrets, **jako secret** | personal access token Supabase |
 
 Hasło zaznacz jako secret — maskuje je w logach builda. Bramka redaguje własne komunikaty
 (`--password ***`), ale logu Cloudflare nie kontroluje.
@@ -161,7 +163,7 @@ Można to też ustawić API-em, gdyby UI się zmieniło:
 
 **Sekrety GitHuba** dla zaplanowanego joba `drift` to osobne miejsce i osobny zbiór:
 `Settings → Secrets and variables → Actions` (nie Dependabot / Codespaces / Agents). Ustawione
-2026-10-11: `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`.
+2026-10-11: `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`; 2026-10-15: `SUPABASE_ACCESS_TOKEN`.
 
 Dla `master` i PR-ów do niego ten sam zestaw bramek biegnie też w CI jako osobne, nazwane kroki
 (`gate:scope`, `gate:routes`, `gate:build-output`); `gate:drift` jest tam wyłączony i chodzi zamiast
@@ -176,6 +178,7 @@ hostowanym.
 | `SUPABASE_KEY` | `wrangler secret put` | Krok 4, teraz |
 | `SUPABASE_PROJECT_REF` | zmienna build-environment w Cloudflare + secret repo na GitHubie | Dla `gate:drift` — build Cloudflare i zaplanowany job `drift` |
 | `SUPABASE_DB_PASSWORD` | zmienna build-environment w Cloudflare + secret repo na GitHubie | Jak wyżej |
+| `SUPABASE_ACCESS_TOKEN` | zmienna build-environment w Cloudflare + secret repo na GitHubie | Jak wyżej |
 | LLM API key (FR-006, NL-query) | `wrangler secret put` | Odłożone — FR-006 nie jest jeszcze zbudowane |
 
 ## Rollback

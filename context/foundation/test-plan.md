@@ -435,7 +435,8 @@ mapping in the message. A suite that silently no-ops when the stack is down
 reports green having asserted nothing — Risk #7 wearing Risk #1's clothes, and
 the same reasoning §6.6 records for `gate:drift`.
 
-**Run it** with `npm run test:int` (`vitest run tests/integration`), or one
+**Run it** with `npm run test:int` (`vitest run tests/integration
+--no-file-parallelism`), or one
 file with `npx vitest run tests/integration/<subject>.test.ts`, with those
 three values set.
 
@@ -478,8 +479,11 @@ fixture ids declared in `fixtures.ts`.
    RLS live exactly as a request from the browser sees it. Running the query
    under test on the service client would exercise it with every policy
    switched off.
-4. **Two disjoint id spaces and two fixture users**, because Vitest runs files
-   in parallel — so the two suites cannot delete each other's rows.
+4. **Two disjoint id spaces and two fixture users**, so the two suites cannot
+   delete each other's rows. `test:int` also runs files one at a time
+   (`--no-file-parallelism`): `assertReserved` checks only the shared prefix,
+   not a suite's own range, so without that flag a new suite that reused a range
+   would race another file and fail intermittently.
 
 **Three functions are the whole harness API**, all three `async`, so every call
 is awaited. A suite uses them in this order:
@@ -776,7 +780,7 @@ checked-in value was corrected anyway, because it costs nothing and removes the
 question rather than answering it for one Wrangler version.
 
 **Absent credentials fail, they do not skip.** `gate:drift` exits non-zero when
-`SUPABASE_PROJECT_REF` or `SUPABASE_DB_PASSWORD` is missing. A drift gate that
+`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` or `SUPABASE_ACCESS_TOKEN` is missing. A drift gate that
 silently no-ops on a missing secret is Risk #7 wearing Risk #3's clothes — it would
 report green from the deploy path while checking nothing. The same reasoning put a
 `NOTE` line on the build-output gate's exact-value scan, which immediately earned
