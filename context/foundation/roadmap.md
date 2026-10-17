@@ -3,7 +3,7 @@ project: Dziennik dziecka
 version: 3
 status: draft
 created: 2026-09-22
-updated: 2026-10-12
+updated: 2026-10-17
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -48,7 +48,7 @@ Rodzic dwójki dzieci nie pamięta drobnych faktów o nich — pomiarów, objaw�
 
 | ID   | Change ID               | Outcome (user can …)                                                                                             | Prerequisites | PRD refs                                                                                | Status   | Issue |
 | ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------- | -------- | ----- |
-| S-03 | note-search-by-meaning  | rodzic pyta na stronie dziecka własnymi słowami i dostaje jego pasujące notatki z datami i linkami do źródła      | S-02          | FR-006, §Business Logic, §Success Criteria, §Non-Functional Requirements, §Non-Goals     | ready    | —     |
+| S-03 | note-search-by-meaning  | rodzic pyta na stronie dziecka własnymi słowami i dostaje jego pasujące notatki z datami i linkami do źródła      | S-02          | FR-006, §Business Logic, §Success Criteria, §Non-Functional Requirements, §Non-Goals     | in-progress    | —     |
 | S-04 | note-search-precision   | rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę, a nie tylko podobne znaczeniowo                       | S-03          | FR-006, §Business Logic                                                                 | proposed | —     |
 | S-05 | landing-product-identity | rodzic wchodzący na stronę widzi, że to Dziennik dziecka, i loguje się po polsku — bez śladu szablonu startowego  | —             | MS-01, §Access Control (ekran logowania)                                                | done        | —     |
 
@@ -85,7 +85,7 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
   - Jaka jest realna trafność dopasowania na polskich, skrótowych notatkach o zdrowiu? Liczby z benchmarków są przybliżeniem, nie pomiarem na tym zbiorze. — Owner: user. Block: no (mierzalne tylko po wdrożeniu, na własnych notatkach).
   - Czy darmowy plan hostingu obejmuje wybrany model i jaki rozmiar ma jego reprezentacja? Rozmiar trzeba znać przed utworzeniem miejsca na nią. — Owner: user. Block: no (do sprawdzenia przy implementacji).
 - **Risk:** Gwiazda przewodnia M-2 i jedyny kawałek, który dotyka całego zbioru notatek naraz — notatki napisane przed tym kawałkiem trzeba jednorazowo przetworzyć, a ten krok jest nieodwracalny, więc przegląd ich treści idzie przed nim, nie po nim. Druga zasada ochronna PRD („notatki dziecka widzi tylko zalogowane konto") musi obowiązywać również w szukaniu: wyniki nie mogą przeciekać ani między kontami, ani między dziećmi tego samego konta — zakres per dziecko jest tu pomocą, nie zabezpieczeniem. Dwie pułapki wykonania, których nie wolno pomieszać: pytanie o okres wymaga twardego odcięcia po dacie i kompletności w przedziale (pytanie „jak często" na rankingu podobieństwa po prostu zwróci złą liczbę), a jednorazowe przetworzenie istniejących notatek to inna ścieżka niż odpowiadanie na pytanie w 10 sekund. Test kompletności przedziału należy do tego kawałka: `context/foundation/test-plan.md` §3 Faza 3 przekazała go tutaj, bo czytanie, które miałby sprawdzać, powstaje dopiero w S-03 — a oczekiwany zbiór notatek musi pochodzić z fixture'u, nigdy z tego samego zapytania, które jest testowane.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-04: Rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę
 

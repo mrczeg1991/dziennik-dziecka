@@ -27,6 +27,12 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# visual studio local workspace cache
+.vs/
+
+# supabase studio's local SQL editor history
+supabase/snippets/
+
 # Vitest reporter output. The JSON reporter writes under this directory, and ESLint scope is
 # .gitignore-driven -- an untracked, unignored output directory would move gate:scope's exact
 # file count between runs.
