@@ -593,25 +593,25 @@ in Phases 1-3 touches existing row content, and the new columns are nullable.
 
 #### Automated
 
-- [x] 1.1 `npm run test:db` passes, including a new pgTAP file asserting `search_notes` runs under `authenticated` and returns nothing for another account's notes
-- [x] 1.2 `npx supabase db push --dry-run` (or local `supabase start`) applies both migrations cleanly
+- [x] 1.1 `npm run test:db` passes, including a new pgTAP file asserting `search_notes` runs under `authenticated` and returns nothing for another account's notes — 2b072e1
+- [x] 1.2 `npx supabase db push --dry-run` (or local `supabase start`) applies both migrations cleanly — 2b072e1
 
 #### Manual
 
-- [x] 1.3 `select extversion from pg_extension where extname = 'vector'` confirms a version with iterative index scan support
-- [x] 1.4 One real `select public.search_notes(...)` call against a seeded local database returns the expected row shape
+- [x] 1.3 `select extversion from pg_extension where extname = 'vector'` confirms a version with iterative index scan support — 2b072e1
+- [x] 1.4 One real `select public.search_notes(...)` call against a seeded local database returns the expected row shape — 2b072e1
 
 ### Phase 2: Embeddings write path
 
 #### Automated
 
-- [ ] 2.1 `npm run test:unit` and `npm run lint` pass with the new module
-- [ ] 2.2 `EXPECTED.eslintFiles` in `scripts/gate-scope.mjs` re-derived and committed with the new files
+- [x] 2.1 `npm run test:unit` and `npm run lint` pass with the new module
+- [x] 2.2 `EXPECTED.eslintFiles` in `scripts/gate-scope.mjs` re-derived and committed with the new files
 
 #### Manual
 
-- [ ] 2.3 Creating a note through the UI, then reading it back directly, shows a non-null `embedding` column when `OPENAI_API_KEY` is configured
-- [ ] 2.4 Temporarily unsetting `OPENAI_API_KEY` and creating a note still succeeds, with `embedding` left `null`
+- [x] 2.3 Creating a note through the UI, then reading it back directly, shows a non-null `embedding` column when `OPENAI_API_KEY` is configured
+- [x] 2.4 Temporarily unsetting `OPENAI_API_KEY` and creating a note still succeeds, with `embedding` left `null`
 
 ### Phase 3: Question UI and search orchestration
 

@@ -1,5 +1,6 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import type { SupabaseServerClient } from "@/lib/children";
+import { embedText } from "@/lib/embeddings";
 
 export interface Note {
   id: string;
@@ -41,15 +42,21 @@ export async function listNotes(supabase: SupabaseServerClient, childId: string)
  * Inserts one note owned by `userId` on one of that user's children. The policy's
  * `with check` rejects a `childId` belonging to another account. Returns the query
  * error, if any.
+ *
+ * Computes the embedding before the insert so it lands in the same row, no second
+ * round trip. `embedText` degrades to `null` on any failure (missing config, a
+ * non-OK response, a thrown error) rather than throwing, so a note's save never
+ * depends on, or is blocked by, the external AI call succeeding.
  */
 export async function createNote(
   supabase: SupabaseServerClient,
   userId: string,
   { childId, content, occurredAt }: NewNote,
 ): Promise<PostgrestError | null> {
+  const embedding = await embedText(content);
   const { error } = await supabase
     .from("notes")
-    .insert({ user_id: userId, child_id: childId, content, occurred_at: occurredAt });
+    .insert({ user_id: userId, child_id: childId, content, occurred_at: occurredAt, embedding });
   return error;
 }
 
@@ -58,15 +65,20 @@ export async function createNote(
  * soft-deleted note cannot be edited back into view. Scoping is RLS's job, hence no
  * `userId`. `found` reports whether a row matched, so a foreign, missing or already
  * deleted id is distinguishable from a database failure.
+ *
+ * Recomputes the embedding on every edit: a stale embedding describing the old text
+ * would silently mis-rank future questions, so it is never left as-is alongside new
+ * `content`.
  */
 export async function updateNoteContent(
   supabase: SupabaseServerClient,
   noteId: string,
   content: string,
 ): Promise<{ error: PostgrestError | null; found: boolean }> {
+  const embedding = await embedText(content);
   const { data, error } = await supabase
     .from("notes")
-    .update({ content, updated_at: new Date().toISOString() })
+    .update({ content, embedding, updated_at: new Date().toISOString() })
     .eq("id", noteId)
     .is("deleted_at", null)
     .select("id");
