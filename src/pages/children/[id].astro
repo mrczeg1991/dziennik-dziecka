@@ -6,6 +6,8 @@ import { ServerError } from "@/components/auth/ServerError";
 import { createClient } from "@/lib/supabase";
 import { getChild, type Child } from "@/lib/children";
 import { listNotes, type Note } from "@/lib/notes";
+import { searchNotes } from "@/lib/search";
+import { formatWallClock } from "@/lib/wall-clock";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -58,6 +60,23 @@ try {
 } catch {
   listFailed = true;
 }
+
+// Trimmed so a whitespace-only query behaves like no query, matching the empty-string case
+// below -- neither one reaches searchNotes. No top-level `return` here (see the Astro
+// frontmatter lesson covering this file): everything folds into these three `let`s instead.
+const searchQuery = Astro.url.searchParams.get("q")?.trim() ?? "";
+let searchResults: Note[] = [];
+let searchDegraded = false;
+let searchFailed = false;
+if (searchQuery) {
+  try {
+    const search = await searchNotes(supabase, child.id, searchQuery);
+    searchResults = search.results;
+    searchDegraded = search.degraded;
+  } catch {
+    searchFailed = true;
+  }
+}
 ---
 
 <Layout title={child.name}>
@@ -80,6 +99,61 @@ try {
         </div>
       )}
 
+      <h2 class="mt-6 mb-3 text-lg font-semibold text-blue-100">Zapytaj o notatki</h2>
+      {/* Plain GET form reloading this same page -- no fetch-based island exists anywhere in this
+          codebase, and a question is just another way to arrive at `/children/<id>`. */}
+      <form method="GET" action={`/children/${child.id}`} class="mb-4 flex gap-2">
+        <input
+          type="text"
+          name="q"
+          value={searchQuery}
+          placeholder="np. Co jadła w zeszłym tygodniu?"
+          class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-white/40 transition-colors focus:ring-2 focus:ring-purple-400 focus:outline-none"
+        />
+        <button
+          type="submit"
+          class="shrink-0 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
+        >
+          Szukaj
+        </button>
+      </form>
+
+      {searchQuery && (
+        <div class="mb-6 space-y-3">
+          {searchFailed ? (
+            <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+              Nie udało się wyszukać notatek. Odśwież stronę.
+            </p>
+          ) : (
+            <div class="space-y-3">
+              {searchDegraded && (
+                <p class="rounded-lg border border-amber-400/30 bg-amber-900/20 px-3 py-2 text-xs text-amber-200">
+                  wyszukiwanie częściowo niedostępne — wyniki tylko tekstowe
+                </p>
+              )}
+              {searchResults.length === 0 ? (
+                <p class="text-center text-blue-100/70">Brak notatek pasujących do pytania.</p>
+              ) : (
+                <ul class="space-y-3">
+                  {searchResults.map((note) => (
+                    <li>
+                      {/* Links down to the same note in the full list below -- see the matching `id` there. */}
+                      <a
+                        href={`#note-${note.id}`}
+                        class="block rounded-lg border border-white/10 bg-white/5 px-4 py-3 transition-colors hover:bg-white/10"
+                      >
+                        <p class="mb-2 text-xs text-blue-100/60">{formatWallClock(note.occurred_at)}</p>
+                        <p class="break-words whitespace-pre-wrap">{note.content}</p>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <h2 class="mt-6 mb-3 text-lg font-semibold text-blue-100">Notatki</h2>
       {listFailed ? (
         <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
@@ -90,7 +164,7 @@ try {
       ) : (
         <ul class="space-y-3">
           {notes.map((note) => (
-            <li>
+            <li id={`note-${note.id}`}>
               {/* Nothing in a row is interactive until the parent clicks "Edytuj" or "Usuń". */}
               <NoteItem note={note} childId={child.id} client:visible />
             </li>

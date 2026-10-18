@@ -605,28 +605,28 @@ in Phases 1-3 touches existing row content, and the new columns are nullable.
 
 #### Automated
 
-- [x] 2.1 `npm run test:unit` and `npm run lint` pass with the new module
-- [x] 2.2 `EXPECTED.eslintFiles` in `scripts/gate-scope.mjs` re-derived and committed with the new files
+- [x] 2.1 `npm run test:unit` and `npm run lint` pass with the new module — 5ca6708
+- [x] 2.2 `EXPECTED.eslintFiles` in `scripts/gate-scope.mjs` re-derived and committed with the new files — 5ca6708
 
 #### Manual
 
-- [x] 2.3 Creating a note through the UI, then reading it back directly, shows a non-null `embedding` column when `OPENAI_API_KEY` is configured
-- [x] 2.4 Temporarily unsetting `OPENAI_API_KEY` and creating a note still succeeds, with `embedding` left `null`
+- [x] 2.3 Creating a note through the UI, then reading it back directly, shows a non-null `embedding` column when `OPENAI_API_KEY` is configured — 5ca6708
+- [x] 2.4 Temporarily unsetting `OPENAI_API_KEY` and creating a note still succeeds, with `embedding` left `null` — 5ca6708
 
 ### Phase 3: Question UI and search orchestration
 
 #### Automated
 
-- [ ] 3.1 `npm run test:unit` passes for the date-range parser
-- [ ] 3.2 `npm run lint` and `npx astro check` pass
-- [ ] 3.3 `npm run gate:scope` re-derived and passing
+- [x] 3.1 `npm run test:unit` passes for the date-range parser
+- [x] 3.2 `npm run lint` and `npx astro check` pass
+- [x] 3.3 `npm run gate:scope` re-derived and passing
 
 #### Manual
 
-- [ ] 3.4 Asking a question matching an existing note's topic (different word, same meaning) returns that note
-- [ ] 3.5 Asking a question naming a recognized period returns every note in that window, not a truncated subset
-- [ ] 3.6 Asking a question naming an unrecognized period phrase still returns ranked (non-date-bound) results rather than erroring
-- [ ] 3.7 Simulating an `OPENAI_API_KEY` failure still returns full-text matches, visibly marked as degraded
+- [x] 3.4 Asking a question matching an existing note's topic (different word, same meaning) returns that note
+- [x] 3.5 Asking a question naming a recognized period returns every note in that window, not a truncated subset
+- [x] 3.6 Asking a question naming an unrecognized period phrase still returns ranked (non-date-bound) results rather than erroring
+- [x] 3.7 Simulating an `OPENAI_API_KEY` failure still returns full-text matches, visibly marked as degraded
 
 ### Phase 4: One-time backfill script
 
