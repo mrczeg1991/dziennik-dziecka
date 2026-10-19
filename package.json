@@ -11,6 +11,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "smoke": "node scripts/smoke.mjs",
+    "backfill:embeddings": "node scripts/backfill-embeddings.mjs",
     "gate:scope": "node scripts/gate-scope.mjs",
     "gate:routes": "node scripts/gate-routes.mjs",
     "gate:build-output": "node scripts/gate-build-output.mjs",

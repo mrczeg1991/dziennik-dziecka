@@ -617,27 +617,27 @@ in Phases 1-3 touches existing row content, and the new columns are nullable.
 
 #### Automated
 
-- [x] 3.1 `npm run test:unit` passes for the date-range parser
-- [x] 3.2 `npm run lint` and `npx astro check` pass
-- [x] 3.3 `npm run gate:scope` re-derived and passing
+- [x] 3.1 `npm run test:unit` passes for the date-range parser — 588d86e
+- [x] 3.2 `npm run lint` and `npx astro check` pass — 588d86e
+- [x] 3.3 `npm run gate:scope` re-derived and passing — 588d86e
 
 #### Manual
 
-- [x] 3.4 Asking a question matching an existing note's topic (different word, same meaning) returns that note
-- [x] 3.5 Asking a question naming a recognized period returns every note in that window, not a truncated subset
-- [x] 3.6 Asking a question naming an unrecognized period phrase still returns ranked (non-date-bound) results rather than erroring
-- [x] 3.7 Simulating an `OPENAI_API_KEY` failure still returns full-text matches, visibly marked as degraded
+- [x] 3.4 Asking a question matching an existing note's topic (different word, same meaning) returns that note — 588d86e
+- [x] 3.5 Asking a question naming a recognized period returns every note in that window, not a truncated subset — 588d86e
+- [x] 3.6 Asking a question naming an unrecognized period phrase still returns ranked (non-date-bound) results rather than erroring — 588d86e
+- [x] 3.7 Simulating an `OPENAI_API_KEY` failure still returns full-text matches, visibly marked as degraded — 588d86e
 
 ### Phase 4: One-time backfill script
 
 #### Automated
 
-- [ ] 4.1 `node scripts/backfill-embeddings.mjs` exits 0 against a local seeded database with at least one pre-existing null-embedding note
+- [x] 4.1 `node scripts/backfill-embeddings.mjs` exits 0 against a local seeded database with at least one pre-existing null-embedding note
 
 #### Manual
 
-- [ ] 4.2 Reviewed existing notes for identifying content before running against the real hosted database
-- [ ] 4.3 After running against the hosted project, a pre-existing note becomes findable through the question UI
+- [x] 4.2 Reviewed existing notes for identifying content before running against the real hosted database
+- [x] 4.3 After running against the hosted project, a pre-existing note becomes findable through the question UI
 
 ### Phase 5: Tests, gates, and deploy runbook
 
