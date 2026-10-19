@@ -643,9 +643,9 @@ in Phases 1-3 touches existing row content, and the new columns are nullable.
 
 #### Automated
 
-- [x] 5.1 `npm run test:unit`, `npm run test:int`, `npm run test:db` all pass
-- [x] 5.2 `npm run gates` passes end to end
+- [x] 5.1 `npm run test:unit`, `npm run test:int`, `npm run test:db` all pass — 7697233
+- [x] 5.2 `npm run gates` passes end to end — 7697233
 
 #### Manual
 
-- [x] 5.3 Re-read `deploy-plan.md`'s updated secrets table and confirm it matches what was actually configured
+- [x] 5.3 Re-read `deploy-plan.md`'s updated secrets table and confirm it matches what was actually configured — 7697233

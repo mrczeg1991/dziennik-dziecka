@@ -1,7 +1,7 @@
 ---
 change_id: note-search-by-meaning
 title: Note search by meaning
-status: implementing
+status: implemented
 created: 2026-10-16
 updated: 2026-10-19
 archived_at: null
