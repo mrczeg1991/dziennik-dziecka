@@ -632,20 +632,20 @@ in Phases 1-3 touches existing row content, and the new columns are nullable.
 
 #### Automated
 
-- [x] 4.1 `node scripts/backfill-embeddings.mjs` exits 0 against a local seeded database with at least one pre-existing null-embedding note
+- [x] 4.1 `node scripts/backfill-embeddings.mjs` exits 0 against a local seeded database with at least one pre-existing null-embedding note — 27124f4
 
 #### Manual
 
-- [x] 4.2 Reviewed existing notes for identifying content before running against the real hosted database
-- [x] 4.3 After running against the hosted project, a pre-existing note becomes findable through the question UI
+- [x] 4.2 Reviewed existing notes for identifying content before running against the real hosted database — 27124f4
+- [x] 4.3 After running against the hosted project, a pre-existing note becomes findable through the question UI — 27124f4
 
 ### Phase 5: Tests, gates, and deploy runbook
 
 #### Automated
 
-- [ ] 5.1 `npm run test:unit`, `npm run test:int`, `npm run test:db` all pass
-- [ ] 5.2 `npm run gates` passes end to end
+- [x] 5.1 `npm run test:unit`, `npm run test:int`, `npm run test:db` all pass
+- [x] 5.2 `npm run gates` passes end to end
 
 #### Manual
 
-- [ ] 5.3 Re-read `deploy-plan.md`'s updated secrets table and confirm it matches what was actually configured
+- [x] 5.3 Re-read `deploy-plan.md`'s updated secrets table and confirm it matches what was actually configured

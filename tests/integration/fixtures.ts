@@ -102,6 +102,12 @@ export interface NoteSeed {
   content: string;
   /** Soft-deleted on seed. The owner is unchanged -- that is the point of the exclusion test. */
   deleted?: boolean;
+  /**
+   * Precomputed, synthetic `notes.embedding` value -- never a real OpenAI call. Optional and
+   * additive: a fixture that omits it keeps seeding `null`, unchanged from before this field
+   * existed.
+   */
+  embedding?: number[];
 }
 
 export interface Fixture {
@@ -174,6 +180,83 @@ export const EDIT_SCOPE_FIXTURE: Fixture = {
   ],
 };
 
+export const SEARCH_IDS = {
+  user: `${FIXTURE_ID_PREFIX}000030000001`,
+  child: `${FIXTURE_ID_PREFIX}0000300000c1`,
+  nearNote: `${FIXTURE_ID_PREFIX}00003000c101`,
+  beforeWindowNote: `${FIXTURE_ID_PREFIX}00003000c102`,
+  atWindowStartNote: `${FIXTURE_ID_PREFIX}00003000c103`,
+  atWindowEndNote: `${FIXTURE_ID_PREFIX}00003000c104`,
+  afterWindowNote: `${FIXTURE_ID_PREFIX}00003000c105`,
+  fullTextOnlyNote: `${FIXTURE_ID_PREFIX}00003000c106`,
+};
+
+// A one-hot synthetic vector, never a real OpenAI embedding: cosine similarity of a vector with
+// itself is 1.0, comfortably over `search_notes`'s default `p_similarity_threshold` (0.5)
+// regardless of how that default is later tuned. Reused as both the seeded `embedding` column
+// value on every "should be in the date window" note and as `p_query_embedding` in the RPC calls
+// below, so the date filter -- not an accidental threshold miss -- is what proves inclusion/
+// exclusion.
+export const SEARCH_ONE_HOT_EMBEDDING: number[] = new Array(1536).fill(0).map((_, i) => (i === 0 ? 1 : 0));
+
+/**
+ * One account, one child, six notes -- for `tests/integration/notes-search.test.ts`. `nearNote`
+ * sits mid-window and carries the one-hot embedding, serving double duty as both the no-date-range
+ * semantic match and the date-window's "included" case. `beforeWindowNote`/`atWindowEndNote`/
+ * `afterWindowNote` also carry the one-hot embedding, so the date filter alone is what excludes
+ * them. `atWindowStartNote` proves the inclusive lower bound. `fullTextOnlyNote` carries no
+ * embedding at all, for the degraded (`p_query_embedding: null`) full-text-only assertion.
+ */
+export const SEARCH_FIXTURE: Fixture = {
+  email: "search.fixture@example.com",
+  password: FIXTURE_PASSWORD,
+  userId: SEARCH_IDS.user,
+  children: [{ id: SEARCH_IDS.child, name: "Search fixture child" }],
+  notes: [
+    {
+      id: SEARCH_IDS.nearNote,
+      childId: SEARCH_IDS.child,
+      occurredAt: "2026-07-04T12:00",
+      content: "notatka o spacerze w parku",
+      embedding: SEARCH_ONE_HOT_EMBEDDING,
+    },
+    {
+      id: SEARCH_IDS.beforeWindowNote,
+      childId: SEARCH_IDS.child,
+      occurredAt: "2026-06-30T23:59",
+      content: "notatka sprzed okna czasowego",
+      embedding: SEARCH_ONE_HOT_EMBEDDING,
+    },
+    {
+      id: SEARCH_IDS.atWindowStartNote,
+      childId: SEARCH_IDS.child,
+      occurredAt: "2026-07-01T00:00",
+      content: "notatka na poczatku okna czasowego",
+      embedding: SEARCH_ONE_HOT_EMBEDDING,
+    },
+    {
+      id: SEARCH_IDS.atWindowEndNote,
+      childId: SEARCH_IDS.child,
+      occurredAt: "2026-07-08T00:00",
+      content: "notatka dokladnie na koncu okna czasowego",
+      embedding: SEARCH_ONE_HOT_EMBEDDING,
+    },
+    {
+      id: SEARCH_IDS.afterWindowNote,
+      childId: SEARCH_IDS.child,
+      occurredAt: "2026-07-08T00:01",
+      content: "notatka po oknie czasowym",
+      embedding: SEARCH_ONE_HOT_EMBEDDING,
+    },
+    {
+      id: SEARCH_IDS.fullTextOnlyNote,
+      childId: SEARCH_IDS.child,
+      occurredAt: "2026-05-01T09:00",
+      content: "dzisiaj byl kaszel KASZELXYZ",
+    },
+  ],
+};
+
 // The reserved prefix is what makes the deletes below safe to run against a developer's own local
 // database, so it is asserted rather than assumed. A typo in one id would otherwise widen the delete
 // surface silently -- and §6.6 records the silent direction as the dangerous one.
@@ -224,6 +307,7 @@ export async function seedFixture(fixture: Fixture): Promise<void> {
       content: note.content,
       occurred_at: note.occurredAt,
       deleted_at: note.deleted === true ? SEEDED_DELETED_AT : null,
+      embedding: note.embedding ?? null,
     })),
   );
   if (insertedNotes.error) {

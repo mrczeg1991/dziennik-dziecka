@@ -861,6 +861,41 @@ same seat asymmetry Phase 2 documented, met by a different kind of test. It chan
 if branch protection becomes available or a database becomes reachable from the
 build command — not before.
 
+### 6.7 Testing an AI-dependent query without mocking the AI call
+
+Delivered by §3 Phase 5 (`context/changes/note-search-by-meaning/`), which
+closes out the rollout this guide opened.
+
+**Id-space `3` is now taken.** `tests/integration/fixtures.ts`'s
+`SEARCH_FIXTURE` (`SEARCH_IDS`, prefix `…-0000`**`3`**`…`) backs
+`tests/integration/notes-search.test.ts`. §6.3's "Starting a third suite"
+example is this fixture, verbatim — a fourth suite claims digit `4`.
+
+**The pattern, for the next AI-dependent test.** This codebase has no
+`vi.mock` anywhere (§6.6 already noted this for secrets; it holds for AI
+calls too), so a suite that needs `search_notes` to rank by vector similarity
+cannot fake `embedText`. Instead it seeds a precomputed, synthetic embedding
+— a one-hot vector, never a real OpenAI response — directly into
+`notes.embedding`, and calls the SQL function under test,
+`public.search_notes(...)`, through `.rpc()` rather than through the
+TypeScript orchestration wrapper (`src/lib/search.ts`) that would otherwise
+need a live AI client. Cosine similarity of a vector with itself is `1.0`,
+which trivially clears `search_notes`'s similarity threshold regardless of
+how that default is later tuned — so the test controls inclusion by the
+parameter under test (a date window, in this suite's case), not by hoping a
+real embedding happens to rank the right way. The next person adding an
+AI-dependent test, once §3 Phase 4 of this guide's own rollout opens, should
+follow this same shape: seed the synthetic vector, call the SQL function
+directly, never mock the client.
+
+**Why `src/lib/search.ts` could not be imported directly here.** It calls
+`embedText` (`src/lib/embeddings.ts`), which imports `OPENAI_API_KEY` from
+`"astro:env/server"` — a virtual module that does not resolve under plain
+Vitest. `vitest.config.ts`'s own top comment says "Nothing under `tests/`
+imports `astro:env/server`"; that line is made slightly stale by this
+addition; it remains literally true only because this suite deliberately
+avoided doing so, calling `search_notes` through `.rpc()` instead.
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout. Future contributors should respect

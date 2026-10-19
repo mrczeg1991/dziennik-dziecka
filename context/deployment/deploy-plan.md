@@ -51,6 +51,7 @@ Interaktywne, otwiera przeglądarkę — wymaga Twojego udziału, nie da się za
 ```bash
 npx wrangler secret put SUPABASE_URL
 npx wrangler secret put SUPABASE_KEY
+npx wrangler secret put OPENAI_API_KEY
 ```
 
 Wartości z kroku 2.3. Nigdy nie wpisuj ich do `wrangler.jsonc` (repo jest publiczne/wersjonowane).
@@ -179,7 +180,7 @@ hostowanym.
 | `SUPABASE_PROJECT_REF` | zmienna build-environment w Cloudflare + secret repo na GitHubie | Dla `gate:drift` — build Cloudflare i zaplanowany job `drift` |
 | `SUPABASE_DB_PASSWORD` | zmienna build-environment w Cloudflare + secret repo na GitHubie | Jak wyżej |
 | `SUPABASE_ACCESS_TOKEN` | zmienna build-environment w Cloudflare + secret repo na GitHubie | Jak wyżej |
-| LLM API key (FR-006, NL-query) | `wrangler secret put` | Odłożone — FR-006 nie jest jeszcze zbudowane |
+| `OPENAI_API_KEY` | `wrangler secret put` | Krok 4, teraz |
 
 ## Rollback
 
@@ -198,7 +199,6 @@ zapisywania notatki.
 ## Poza zakresem tego wdrożenia
 
 - ~~CI/CD auto-deploy-on-merge — brak `git remote`, repo nie jest jeszcze na GitHubie.~~ **Zrobione poza tym runbookiem**: `origin` istnieje, integracja Git w Cloudflare buduje `master` przy pushu. Patrz „Brama wdrożenia”.
-- Sekret klucza LLM i powiązana logika — FR-006 nie jest jeszcze zbudowane.
 - Upgrade na Workers Paid plan ($5/mo, wyższy limit CPU) — odłożony do momentu budowy FR-006, per risk register w `infrastructure.md`.
 
 ## Następne kroki

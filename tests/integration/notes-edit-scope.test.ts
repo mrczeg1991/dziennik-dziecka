@@ -27,10 +27,16 @@ import {
   teardownFixture,
 } from "./fixtures";
 
-// The two columns an edit is permitted to move, and the only hand-maintained list in this file.
+// The columns an edit is permitted to move, and the only hand-maintained list in this file.
 // `content` must change to the new text; `updated_at` is allowed to differ because
-// `updateNoteContent` stamps it (src/lib/notes.ts:69).
-const EDITABLE_COLUMNS = new Set(["content", "updated_at"]);
+// `updateNoteContent` stamps it (src/lib/notes.ts:69). `fts` is a `generated always as (...)
+// stored` column over `content` (supabase/migrations/20261017103455_add_notes_search.sql), so it
+// recomputes on every edit as an unavoidable consequence of the database schema, not a handler
+// choice -- excluding it here would make this test fail against a correct database. `embedding` is
+// a handler choice, the same shape as `updated_at`: `updateNoteContent` deliberately recomputes it
+// on every edit (src/lib/notes.ts:69-72) because a stale embedding describing the old text would
+// silently mis-rank future questions.
+const EDITABLE_COLUMNS = new Set(["content", "updated_at", "fts", "embedding"]);
 
 const EDITED_CONTENT = "the text this note carries after the edit";
 

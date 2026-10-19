@@ -6,9 +6,12 @@
 // the fallback the plan pre-approved -- a plain Vitest config plus the one thing `getViteConfig()`
 // was wanted for, the `@/*` alias that mirrors tsconfig.json's path mapping.
 //
-// Nothing under tests/ imports `astro:env/server`, so the fallback loses nothing: src/lib's only
-// Astro-adjacent imports are type-only and erase at runtime. Revisit if a test ever needs an
-// Astro virtual module.
+// `astro:env/server` is aliased to a stub (`tests/stubs/astro-env-server.ts`) for the same reason:
+// this was the "revisit if a test ever needs an Astro virtual module" case. `src/lib/notes.ts`
+// started importing `src/lib/embeddings.ts` (a *value* import, not type-only) once the write-path
+// embedding landed, and `embeddings.ts` imports `OPENAI_API_KEY` from `astro:env/server` -- a
+// virtual module with no meaning outside an Astro build, so any integration suite that imports
+// `@/lib/notes` now needs it to resolve to *something*, not nothing.
 import { fileURLToPath } from "node:url";
 
 import { configDefaults, defineConfig } from "vitest/config";
@@ -21,12 +24,17 @@ export default defineConfig({
     // neither reads .gitignore nor anchors the `tests/unit` filter, so a worktree's tests would be
     // counted by gate:scope's floor and its integration suites would race this one's fixtures.
     exclude: [...configDefaults.exclude, ".claude/**"],
-    // Mirrors tsconfig.json's `"@/*": ["./src/*"]`. The key is `@` and not `@/`: Vite's alias
-    // matcher takes a string `find` as an exact segment prefix, so `@/` only ever matches `@//`
-    // and the specifier falls through to Node's resolver ("Cannot find package '@/lib/...'").
-    // Absolute, because a relative replacement would resolve against the importing file.
     alias: {
+      // Mirrors tsconfig.json's `"@/*": ["./src/*"]`. The key is `@` and not `@/`: Vite's alias
+      // matcher takes a string `find` as an exact segment prefix, so `@/` only ever matches `@//`
+      // and the specifier falls through to Node's resolver ("Cannot find package '@/lib/...'").
+      // Absolute, because a relative replacement would resolve against the importing file.
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // An exact specifier, not a prefix -- `astro:env/server` is the only virtual module any
+      // test-reachable code imports today. A real importer like `src/lib/supabase.ts` is never
+      // actually reached at runtime by a current test (it's `import type`-only two hops away), but
+      // the stub answers for it too in case that changes.
+      "astro:env/server": fileURLToPath(new URL("./tests/stubs/astro-env-server.ts", import.meta.url)),
     },
   },
 });
