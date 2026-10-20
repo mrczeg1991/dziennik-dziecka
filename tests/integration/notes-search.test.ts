@@ -135,3 +135,29 @@ describe("search_notes degraded mode (null embedding)", () => {
     expect(idsOf(results)).toStrictEqual([SEARCH_IDS.fullTextOnlyNote]);
   });
 });
+
+describe("search_notes degraded mode inside a date window", () => {
+  it("still finds an in-window note through the full-text arm when the embedding is null", async () => {
+    // The two modes above are each covered in isolation; their intersection was not, and that is
+    // where a regression hid: the date-bound branch gated its text arm on the same threshold the
+    // vector arm uses, so with `p_query_embedding: null` it matched nothing at all and a question
+    // naming a period returned zero rows while the UI announced "wyniki tylko tekstowe".
+    //
+    // "spacerze" appears only in nearNote (2026-07-04, mid-window). The vector arm cannot
+    // contribute here, so a returned row can only have come from the full-text arm.
+    const results = await callSearchNotes({
+      childId: SEARCH_IDS.child,
+      queryText: "spacerze",
+      queryEmbedding: null,
+      dateStart: "2026-07-01T00:00:00",
+      dateEnd: "2026-07-08T00:00:00",
+    });
+
+    expect(idsOf(results)).toStrictEqual([SEARCH_IDS.nearNote]);
+
+    // Stated separately: atWindowStartNote is inside the same window and carries an embedding, so
+    // its absence proves the text arm still discriminates rather than the window becoming a
+    // catch-all once the threshold was removed.
+    expect(results.map((note) => note.id)).not.toContain(SEARCH_IDS.atWindowStartNote);
+  });
+});

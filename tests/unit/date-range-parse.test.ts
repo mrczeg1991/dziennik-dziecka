@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePolishDateRange } from "@/lib/date-range-parse";
+import { formatDateRange, parsePolishDateRange } from "@/lib/date-range-parse";
 
 // All non-DST cases are anchored at a single fixed instant per describe block, picked so the
 // Poland wall clock lands well inside the day (never near midnight), so the date key under test
@@ -105,10 +105,10 @@ describe("parsePolishDateRange — year phrases", () => {
   });
 });
 
-describe("parsePolishDateRange — month names (assume the current year)", () => {
-  // 2026-06-15T12:00:00Z is 14:00 local (CEST) -- any fixed midyear instant works, since the
-  // behavior under test is the locative-name lookup and the year carried from `now`, not a
-  // boundary condition in the anchor itself (the January year-rollover is covered above).
+describe("parsePolishDateRange — month names (the most recent occurrence of that month)", () => {
+  // 2026-06-15T12:00:00Z is 14:00 local (CEST). A midyear anchor is what makes this table carry
+  // its weight: months at or before June resolve to 2026, months after it can only mean 2025, so
+  // one table covers both directions of the year resolution.
   const now = new Date("2026-06-15T12:00:00Z");
 
   const MONTHS: [phrase: string, start: string, end: string][] = [
@@ -117,14 +117,16 @@ describe("parsePolishDateRange — month names (assume the current year)", () =>
     ["w marcu", "2026-03-01T00:00", "2026-04-01T00:00"],
     ["w kwietniu", "2026-04-01T00:00", "2026-05-01T00:00"],
     ["w maju", "2026-05-01T00:00", "2026-06-01T00:00"],
+    // June is the anchor's own month: the current month stays in the current year.
     ["w czerwcu", "2026-06-01T00:00", "2026-07-01T00:00"],
-    ["w lipcu", "2026-07-01T00:00", "2026-08-01T00:00"],
-    ["w sierpniu", "2026-08-01T00:00", "2026-09-01T00:00"],
-    ["w wrześniu", "2026-09-01T00:00", "2026-10-01T00:00"],
-    ["w październiku", "2026-10-01T00:00", "2026-11-01T00:00"],
-    ["w listopadzie", "2026-11-01T00:00", "2026-12-01T00:00"],
-    // December is the one that carries the year forward -- the mirror of January's backward carry above.
-    ["w grudniu", "2026-12-01T00:00", "2027-01-01T00:00"],
+    // July onward is still ahead of a June anchor, so each one means 2025's month.
+    ["w lipcu", "2025-07-01T00:00", "2025-08-01T00:00"],
+    ["w sierpniu", "2025-08-01T00:00", "2025-09-01T00:00"],
+    ["w wrześniu", "2025-09-01T00:00", "2025-10-01T00:00"],
+    ["w październiku", "2025-10-01T00:00", "2025-11-01T00:00"],
+    ["w listopadzie", "2025-11-01T00:00", "2025-12-01T00:00"],
+    // December carries the year forward off 2025 -- the mirror of January's backward carry above.
+    ["w grudniu", "2025-12-01T00:00", "2026-01-01T00:00"],
   ];
 
   for (const [phrase, start, end] of MONTHS) {
@@ -132,6 +134,37 @@ describe("parsePolishDateRange — month names (assume the current year)", () =>
       expect(parsePolishDateRange(`Co było ${phrase}?`, now)).toEqual({ start, end });
     });
   }
+
+  it("never resolves a bare month into the future", () => {
+    // The case this rule exists for: pinned to the current year, a March question about July
+    // produced a window four months ahead, which matches no note and says so silently.
+    const march = new Date("2026-03-10T12:00:00Z");
+
+    expect(parsePolishDateRange("Co jadła w lipcu?", march)).toEqual({
+      start: "2025-07-01T00:00",
+      end: "2025-08-01T00:00",
+    });
+  });
+});
+
+describe("formatDateRange", () => {
+  // The upper bound is exclusive everywhere in this module, so every case here checks that the
+  // label names the last day actually IN the window -- never the midnight that bounds it.
+  it("renders a whole month as its first and last day", () => {
+    expect(formatDateRange({ start: "2026-07-01T00:00", end: "2026-08-01T00:00" })).toBe("01.07.2026 – 31.07.2026");
+  });
+
+  it("renders a single day as that day twice", () => {
+    expect(formatDateRange({ start: "2026-07-15T00:00", end: "2026-07-16T00:00" })).toBe("15.07.2026 – 15.07.2026");
+  });
+
+  it("steps back across a year boundary", () => {
+    expect(formatDateRange({ start: "2025-01-01T00:00", end: "2026-01-01T00:00" })).toBe("01.01.2025 – 31.12.2025");
+  });
+
+  it("steps back into February in a non-leap year", () => {
+    expect(formatDateRange({ start: "2026-02-01T00:00", end: "2026-03-01T00:00" })).toBe("01.02.2026 – 28.02.2026");
+  });
 });
 
 describe("parsePolishDateRange — across Poland's 2026 DST transitions", () => {

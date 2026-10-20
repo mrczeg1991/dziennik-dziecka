@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase";
 import { getChild, type Child } from "@/lib/children";
 import { listNotes, type Note } from "@/lib/notes";
 import { searchNotes } from "@/lib/search";
+import { formatDateRange } from "@/lib/date-range-parse";
 import { formatWallClock } from "@/lib/wall-clock";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -68,11 +69,15 @@ const searchQuery = Astro.url.searchParams.get("q")?.trim() ?? "";
 let searchResults: Note[] = [];
 let searchDegraded = false;
 let searchFailed = false;
+let searchDateRange: string | null = null;
 if (searchQuery) {
   try {
     const search = await searchNotes(supabase, child.id, searchQuery);
     searchResults = search.results;
     searchDegraded = search.degraded;
+    // Surfaced because a recognized period silently changes which notes can match at all: an empty
+    // result is only readable if the parent can see the window their words were taken to mean.
+    searchDateRange = search.dateRange ? formatDateRange(search.dateRange) : null;
   } catch {
     searchFailed = true;
   }
@@ -126,6 +131,11 @@ if (searchQuery) {
             </p>
           ) : (
             <div class="space-y-3">
+              {searchDateRange && (
+                <p class="rounded-lg border border-blue-400/30 bg-blue-900/20 px-3 py-2 text-xs text-blue-200">
+                  wyniki z okresu {searchDateRange}
+                </p>
+              )}
               {searchDegraded && (
                 <p class="rounded-lg border border-amber-400/30 bg-amber-900/20 px-3 py-2 text-xs text-amber-200">
                   wyszukiwanie częściowo niedostępne — wyniki tylko tekstowe

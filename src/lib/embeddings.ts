@@ -3,6 +3,12 @@ import { OPENAI_API_KEY } from "astro:env/server";
 const EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
 const EMBEDDING_MODEL = "text-embedding-3-small";
 
+// A stalled connection is accepted and then never answers, so it never rejects and the
+// catch below never runs -- the Worker would be killed by the platform wall clock first,
+// taking the parent's unsaved note with it. AbortSignal.timeout rejects, which is what
+// routes a stall into the `null` degradation the rest of this module promises.
+const REQUEST_TIMEOUT_MS = 5000;
+
 /**
  * Computes an embedding for `text` via OpenAI's embeddings endpoint. Degrades to `null`
  * on missing configuration, a non-OK response, or a thrown error — the same contract
@@ -26,6 +32,7 @@ export async function embedText(text: string): Promise<number[] | null> {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({ model: EMBEDDING_MODEL, input: text }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {

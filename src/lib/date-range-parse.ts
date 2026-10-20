@@ -49,6 +49,22 @@ function monthKey(year: number, month: number): string {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-01`;
 }
 
+/** `YYYY-MM-DD` to `dd.mm.rrrr` by slicing, matching `formatWallClock`'s date half. */
+function dayLabel(dateKey: string): string {
+  return `${dateKey.slice(8, 10)}.${dateKey.slice(5, 7)}.${dateKey.slice(0, 4)}`;
+}
+
+/**
+ * The window as a parent reads it: `dd.mm.rrrr – dd.mm.rrrr`, both ends inclusive.
+ *
+ * `end` is exclusive everywhere else in this module -- it is the next period's first midnight --
+ * so the displayed upper bound is the day before it. Showing the raw value would name a day whose
+ * notes are deliberately absent from the result.
+ */
+export function formatDateRange(range: { start: string; end: string }): string {
+  return `${dayLabel(range.start.slice(0, 10))} – ${dayLabel(addDays(range.end.slice(0, 10), -1))}`;
+}
+
 /** The 12 Polish month names in their locative form ("w lipcu"), mapped to a 1-indexed month number. */
 const MONTH_LOCATIVES: Record<string, number> = {
   styczniu: 1,
@@ -119,8 +135,16 @@ export function parsePolishDateRange(question: string, now: Date = new Date()): 
 
   for (const [locative, monthNum] of Object.entries(MONTH_LOCATIVES)) {
     if (lower.includes(`w ${locative}`)) {
-      const next = shiftMonth(year, monthNum, 1);
-      return { start: dayBound(monthKey(year, monthNum)), end: dayBound(monthKey(next.year, next.month)) };
+      // A bare month name carries no year, so it means the most recent occurrence of that month:
+      // one later in the calendar than today's can only be last year's. Pinning it to the current
+      // year instead would answer "w lipcu" asked in March with a window months in the future,
+      // which matches no note and gives the parent no hint that a year was assumed at all.
+      const resolvedYear = monthNum > month ? year - 1 : year;
+      const next = shiftMonth(resolvedYear, monthNum, 1);
+      return {
+        start: dayBound(monthKey(resolvedYear, monthNum)),
+        end: dayBound(monthKey(next.year, next.month)),
+      };
     }
   }
 

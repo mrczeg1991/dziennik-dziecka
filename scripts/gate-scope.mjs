@@ -33,9 +33,10 @@ const EXPECTED = {
   astroCheckFiles: { mode: "floor", value: 48 },
   // npx vitest run tests/unit --reporter=json -> numPassedTests. Floor, not exact: tests are added
   // far more often than removed, and an exact count would make every new test a two-file commit
-  // for no gain -- the direction that matters is a suite quietly getting smaller. 35 passing tests
-  // in one file when this was derived (§3 Phase 3).
-  unitTestsPassed: { mode: "floor", value: 35 },
+  // for no gain -- the direction that matters is a suite quietly getting smaller. Re-derive this
+  // whenever a unit-test file is added: left at its old value it stops catching the one thing it
+  // is for. 72 passing tests across wall-clock.test.ts and date-range-parse.test.ts.
+  unitTestsPassed: { mode: "floor", value: 72 },
 };
 
 function run(command) {

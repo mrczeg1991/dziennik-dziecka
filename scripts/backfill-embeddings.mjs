@@ -22,6 +22,13 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 // OpenAI's embeddings endpoint caps a single call's `input` array at 100 items. Chunking is cheap
 // insurance against ever approaching it, even though this project's scale is nowhere near that today.
 const BATCH_SIZE = 100;
+// Same reason as src/lib/embeddings.ts's timeout: a stall never rejects, so without this a
+// hung connection would park the whole backfill indefinitely. Far longer than the request
+// path's 5s because one call here embeds up to BATCH_SIZE notes, and nobody is waiting on it.
+const REQUEST_TIMEOUT_MS = 30_000;
+// Rows requested per select page. Independent of BATCH_SIZE (which caps an OpenAI call) and of
+// PostgREST's own `max_rows`; see selectAllPending for why a smaller cap stays correct.
+const PAGE_SIZE = 1000;
 
 const URL_ENV = "SUPABASE_URL";
 const SERVICE_ROLE_KEY_ENV = "SUPABASE_SERVICE_ROLE_KEY";
@@ -76,6 +83,7 @@ async function embedBatch(texts) {
         Authorization: `Bearer ${process.env[OPENAI_KEY_ENV]}`,
       },
       body: JSON.stringify({ model: EMBEDDING_MODEL, input: texts }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -97,6 +105,42 @@ async function embedBatch(texts) {
   }
 }
 
+// PostgREST truncates any response at its `max_rows` setting (supabase/config.toml sets 1000)
+// without signalling that it did, so one unbounded select would report a partial backlog as the
+// whole of it: "Found 1000 note(s)", exit 0, and an operator reasonably concluding the backfill is
+// complete when thousands of notes are still null.
+//
+// The whole backlog is read before anything is written, rather than paging as we go: `embedding` is
+// both the column this select filters on and the column the run mutates, so an interleaved pager
+// would shift its own offsets out from under itself and skip rows. The offset advances by the rows
+// actually received, never by the requested page size, so a `max_rows` lower than PAGE_SIZE
+// narrows the pages instead of punching holes in them.
+async function selectAllPending(supabase) {
+  const pending = [];
+  let offset = 0;
+
+  for (;;) {
+    const { data, error } = await supabase
+      .from("notes")
+      .select("id, content")
+      .is("embedding", null)
+      .is("deleted_at", null)
+      .order("id")
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    // Only a failure to reach the database at all is fatal -- a per-chunk OpenAI failure is not.
+    if (error) {
+      throw new Error(`Could not select notes needing an embedding: ${error.message}`);
+    }
+    if (data.length === 0) {
+      return pending;
+    }
+
+    pending.push(...data);
+    offset += data.length;
+  }
+}
+
 async function main() {
   const supabase = createClient(requireEnv(URL_ENV), requireEnv(SERVICE_ROLE_KEY_ENV), {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -104,16 +148,7 @@ async function main() {
   requireEnv(OPENAI_KEY_ENV);
 
   console.log("Selecting notes with no embedding yet...");
-  const { data: rows, error: selectError } = await supabase
-    .from("notes")
-    .select("id, content")
-    .is("embedding", null)
-    .is("deleted_at", null);
-
-  // Only a failure to reach the database at all is fatal -- a per-chunk OpenAI failure is not.
-  if (selectError) {
-    throw new Error(`Could not select notes needing an embedding: ${selectError.message}`);
-  }
+  const rows = await selectAllPending(supabase);
 
   console.log(`Found ${rows.length} note(s) with embedding is null.`);
   if (rows.length === 0) {
