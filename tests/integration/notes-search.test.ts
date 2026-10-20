@@ -13,11 +13,13 @@
 // a vector with itself (1.0) trivially clears `search_notes`'s default 0.5 similarity threshold --
 // proving the *date* boundary is what includes/excludes a row, not an accidental threshold miss.
 //
-// Known, already-accepted limitation this suite does not contradict: the no-date-range branch has
-// no similarity floor and returns the top `p_match_count` regardless of relevance (confirmed during
-// Phase 3 manual testing). So assertion (a) below only asserts the matching note IS present --
-// never that an unrelated note is absent from a no-date-range query. Only inside the date-bound
-// branch, where the window itself excludes rows, is asserting absence valid.
+// The no-date-range branch gained a `p_similarity_threshold` floor in
+// 20261020200647_tune_search_notes_rrf_relevance.sql, so an unrelated note is no longer guaranteed
+// to come back with every query. This suite still only asserts that the matching note IS present
+// on that branch, never that another is absent: the floor's 0.5 default is explicitly unvalidated
+// against real Polish note text, so an absence assertion here would be pinning a number nobody has
+// measured yet. Absence is asserted only inside the date-bound branch, where the window itself --
+// not a threshold -- is what excludes a row.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
