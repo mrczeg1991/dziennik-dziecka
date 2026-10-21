@@ -3,7 +3,7 @@ project: Dziennik dziecka
 version: 3
 status: draft
 created: 2026-09-22
-updated: 2026-10-17
+updated: 2026-10-21
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -48,7 +48,7 @@ Rodzic dwójki dzieci nie pamięta drobnych faktów o nich — pomiarów, objaw�
 
 | ID   | Change ID               | Outcome (user can …)                                                                                             | Prerequisites | PRD refs                                                                                | Status   | Issue |
 | ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------- | -------- | ----- |
-| S-03 | note-search-by-meaning  | rodzic pyta na stronie dziecka własnymi słowami i dostaje jego pasujące notatki z datami i linkami do źródła      | S-02          | FR-006, §Business Logic, §Success Criteria, §Non-Functional Requirements, §Non-Goals     | in-progress    | —     |
+| S-03 | note-search-by-meaning  | rodzic pyta na stronie dziecka własnymi słowami i dostaje jego pasujące notatki z datami i linkami do źródła      | S-02          | FR-006, §Business Logic, §Success Criteria, §Non-Functional Requirements, §Non-Goals     | done    | —     |
 | S-04 | note-search-precision   | rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę, a nie tylko podobne znaczeniowo                       | S-03          | FR-006, §Business Logic                                                                 | proposed | —     |
 | S-05 | landing-product-identity | rodzic wchodzący na stronę widzi, że to Dziennik dziecka, i loguje się po polsku — bez śladu szablonu startowego  | —             | MS-01, §Access Control (ekran logowania)                                                | done        | —     |
 
@@ -85,7 +85,7 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
   - Jaka jest realna trafność dopasowania na polskich, skrótowych notatkach o zdrowiu? Liczby z benchmarków są przybliżeniem, nie pomiarem na tym zbiorze. — Owner: user. Block: no (mierzalne tylko po wdrożeniu, na własnych notatkach).
   - Czy darmowy plan hostingu obejmuje wybrany model i jaki rozmiar ma jego reprezentacja? Rozmiar trzeba znać przed utworzeniem miejsca na nią. — Owner: user. Block: no (do sprawdzenia przy implementacji).
 - **Risk:** Gwiazda przewodnia M-2 i jedyny kawałek, który dotyka całego zbioru notatek naraz — notatki napisane przed tym kawałkiem trzeba jednorazowo przetworzyć, a ten krok jest nieodwracalny, więc przegląd ich treści idzie przed nim, nie po nim. Druga zasada ochronna PRD („notatki dziecka widzi tylko zalogowane konto") musi obowiązywać również w szukaniu: wyniki nie mogą przeciekać ani między kontami, ani między dziećmi tego samego konta — zakres per dziecko jest tu pomocą, nie zabezpieczeniem. Dwie pułapki wykonania, których nie wolno pomieszać: pytanie o okres wymaga twardego odcięcia po dacie i kompletności w przedziale (pytanie „jak często" na rankingu podobieństwa po prostu zwróci złą liczbę), a jednorazowe przetworzenie istniejących notatek to inna ścieżka niż odpowiadanie na pytanie w 10 sekund. Test kompletności przedziału należy do tego kawałka: `context/foundation/test-plan.md` §3 Faza 3 przekazała go tutaj, bo czytanie, które miałby sprawdzać, powstaje dopiero w S-03 — a oczekiwany zbiór notatek musi pochodzić z fixture'u, nigdy z tego samego zapytania, które jest testowane.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-04: Rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę
 
@@ -149,3 +149,4 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
 - **S-01: rodzic po założeniu konta i zalogowaniu dodaje profil dziecka i widzi listę swoich dzieci (zamiast pustego dashboardu ze startera).** — Archived 2026-09-24 → `context/archive/2026-09-23-child-profiles/`. Lesson: —.
 - **S-02: rodzic zapisuje dowolną notatkę tekstową o wybranym dziecku z datą/godziną i od razu widzi ją na liście notatek tego dziecka; notatka przetrwa wylogowanie i ponowne zalogowanie.** — Archived 2026-10-01 → `context/archive/2026-09-26-first-child-note/`. Lesson: —.
 - **S-05: rodzic, który wchodzi na stronę główną albo wprost na logowanie, widzi treść o Dzienniku dziecka — czym produkt jest i do czego służy — a nie opis szablonu startowego ani jego trzech cech technicznych. Tytuł karty przeglądarki nazywa produkt. Logowanie i rejestracja są po polsku. W repozytorium nie zostaje nieużywany plik ani odnośnik, który istnieje tylko dlatego, że projekt postawiono na szablonie.** — Archived 2026-10-05 → `context/archive/2026-10-04-landing-product-identity/`. Lesson: —.
+- **S-03: rodzic na stronie wybranego dziecka zadaje własnymi słowami pytanie o jego notatki i dostaje listę pasujących notatek z datami i linkami do źródłowych wpisów. Dopasowanie po temacie działa też wtedy, gdy w pytaniu użył innego słowa lub innej formy niż w notatce („gorączkę" znajduje notatkę „gorączka 38,5" i notatkę „temperatura 38,5"). Pytanie o okres („w lipcu", „ostatni tydzień") zawęża wynik twardo do tego przedziału i zwraca z niego wszystkie pasujące notatki, nie tylko kilka najbardziej podobnych.** — Archived 2026-10-21 → `context/archive/2026-10-16-note-search-by-meaning/`. Lesson: —.
