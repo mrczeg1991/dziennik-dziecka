@@ -384,32 +384,32 @@ The repo currently disagrees with itself about what the hosted project already h
 
 #### Automated
 
-- [x] 1.1 `npx supabase db reset` applies all six migrations and the new seed without error
-- [x] 1.2 A direct query reports at least 20 live notes across two children, every one with a non-null embedding
-- [x] 1.3 `npm run lint` passes
-- [x] 1.4 `npx astro check` reports 0 errors
-- [x] 1.5 `npm run gate:scope` passes after the counter is re-derived
-- [x] 1.6 `node scripts/measure-similarity.mjs` exits 0 and prints a complete question × note table
-- [x] 1.7 Running the script twice against unchanged data produces identical numbers
+- [x] 1.1 `npx supabase db reset` applies all six migrations and the new seed without error — 5747f31
+- [x] 1.2 A direct query reports at least 20 live notes across two children, every one with a non-null embedding — 5747f31
+- [x] 1.3 `npm run lint` passes — 5747f31
+- [x] 1.4 `npx astro check` reports 0 errors — 5747f31
+- [x] 1.5 `npm run gate:scope` passes after the counter is re-derived — 5747f31
+- [x] 1.6 `node scripts/measure-similarity.mjs` exits 0 and prints a complete question × note table — 5747f31
+- [x] 1.7 Running the script twice against unchanged data produces identical numbers — 5747f31
 
 #### Manual
 
-- [x] 1.8 The corpus reads like the parent's own notes — Polish, abbreviated, a mix of health and daily life — reviewed and accepted by the user
-- [x] 1.9 The printed table is legible enough to read the true-positive and true-negative bands off it directly
+- [x] 1.8 The corpus reads like the parent's own notes — Polish, abbreviated, a mix of health and daily life — reviewed and accepted by the user — 5747f31
+- [x] 1.9 The printed table is legible enough to read the true-positive and true-negative bands off it directly — 5747f31
 
 ### Phase 2: Measure and choose the value
 
 #### Automated
 
-- [ ] 2.1 `node scripts/measure-similarity.mjs` exits 0 with the full question set in place
-- [ ] 2.2 Two consecutive runs produce identical values, confirming the measurement is deterministic
+- [x] 2.1 `node scripts/measure-similarity.mjs` exits 0 with the full question set in place
+- [x] 2.2 Two consecutive runs produce identical values, confirming the measurement is deterministic
 
 #### Manual
 
-- [ ] 2.3 The question set and each expected note were written down before the first value was read
-- [ ] 2.4 No constant in `search_notes` was altered during the measurement
-- [ ] 2.5 The table, both bands, the chosen value and its margins are recorded in `change.md`
-- [ ] 2.6 The chosen value follows the stated rule, and where the bands overlap the admitted-negative count is recorded alongside it
+- [x] 2.3 The question set and each expected note were written down before the first value was read
+- [x] 2.4 No constant in `search_notes` was altered during the measurement
+- [x] 2.5 The table, both bands, the chosen value and its margins are recorded in `change.md`
+- [x] 2.6 The chosen value follows the stated rule, and where the bands overlap the admitted-negative count is recorded alongside it
 
 ### Phase 3: Land the value and pin it
 
