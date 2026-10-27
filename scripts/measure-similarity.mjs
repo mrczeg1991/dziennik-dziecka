@@ -32,11 +32,15 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 const REQUEST_TIMEOUT_MS = 30_000;
 
 // The live default of `p_similarity_threshold`, from
-// supabase/migrations/20261020200647_tune_search_notes_rrf_relevance.sql:45. No caller overrides
-// it (src/lib/search.ts:33-39 sends five of eight parameters), so this constant is the whole of
-// what the vector arm gates on today. When a later migration changes the default, change it here
-// in the same commit -- otherwise this script keeps marking a threshold nothing enforces.
-const CURRENT_THRESHOLD = 0.5;
+// supabase/migrations/20261027140907_recalibrate_search_notes_similarity_floor.sql. No caller
+// overrides it (src/lib/search.ts:33-39 sends five of eight parameters), so this constant is the
+// whole of what the vector arm gates on today. When a later migration changes the default, change
+// it here in the same commit -- otherwise this script keeps marking a threshold nothing enforces.
+//
+// It was 0.5 while this script was being written and while the measurement that chose 0.434 ran:
+// the two runs recorded in change.md `## Pomiar` were taken against 0.5, with no constant touched
+// mid-measurement, and 0.434 is what came out of them.
+const CURRENT_THRESHOLD = 0.434;
 // Half-width of the "too close to call" band reported at the end. A value inside
 // CURRENT_THRESHOLD +/- this is one that a small change to either the question or the note would
 // push across the boundary, so a threshold with many of them in it is a threshold chosen on noise.

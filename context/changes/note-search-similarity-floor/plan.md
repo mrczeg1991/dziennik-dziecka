@@ -401,36 +401,36 @@ The repo currently disagrees with itself about what the hosted project already h
 
 #### Automated
 
-- [x] 2.1 `node scripts/measure-similarity.mjs` exits 0 with the full question set in place
-- [x] 2.2 Two consecutive runs produce identical values, confirming the measurement is deterministic
+- [x] 2.1 `node scripts/measure-similarity.mjs` exits 0 with the full question set in place — f9ddba0
+- [x] 2.2 Two consecutive runs produce identical values, confirming the measurement is deterministic — f9ddba0
 
 #### Manual
 
-- [x] 2.3 The question set and each expected note were written down before the first value was read
-- [x] 2.4 No constant in `search_notes` was altered during the measurement
-- [x] 2.5 The table, both bands, the chosen value and its margins are recorded in `change.md`
-- [x] 2.6 The chosen value follows the stated rule, and where the bands overlap the admitted-negative count is recorded alongside it
+- [x] 2.3 The question set and each expected note were written down before the first value was read — f9ddba0
+- [x] 2.4 No constant in `search_notes` was altered during the measurement — f9ddba0
+- [x] 2.5 The table, both bands, the chosen value and its margins are recorded in `change.md` — f9ddba0
+- [x] 2.6 The chosen value follows the stated rule, and where the bands overlap the admitted-negative count is recorded alongside it — f9ddba0
 
 ### Phase 3: Land the value and pin it
 
 #### Automated
 
-- [ ] 3.1 `npx supabase db reset` applies the new migration cleanly
-- [ ] 3.2 `npm run test:db` passes with no change to its existing assertion count
-- [ ] 3.3 `npm run test:unit` passes, including the graded-vector math
-- [ ] 3.4 `npm run test:int` passes, including the two new threshold assertions and every pre-existing assertion
-- [ ] 3.5 Temporarily setting the migration's default to the old `0.5` makes the new integration assertion fail, then reverting makes it pass again
-- [ ] 3.6 `npm run lint` passes and `npx astro check` reports 0 errors
-- [ ] 3.7 `npm run gate:scope` passes after the counter is re-derived
+- [x] 3.1 `npx supabase db reset` applies the new migration cleanly
+- [x] 3.2 `npm run test:db` passes with no change to its existing assertion count
+- [x] 3.3 `npm run test:unit` passes, including the graded-vector math
+- [x] 3.4 `npm run test:int` passes, including the two new threshold assertions and every pre-existing assertion
+- [x] 3.5 Temporarily setting the migration's default to the old `0.5` makes the new integration assertion fail, then reverting makes it pass again
+- [x] 3.6 `npm run lint` passes and `npx astro check` reports 0 errors
+- [x] 3.7 `npm run gate:scope` passes after the counter is re-derived
 
 #### Manual
 
-- [ ] 3.8 `Czy dostawał Nurofenu w lipcu?` returns the Nurofen note in the UI
-- [ ] 3.9 `Czy miał gorączkę w lipcu?` returns the fever note
-- [ ] 3.10 The bare `Nurofenu` returns the Nurofen note
-- [ ] 3.11 `Czy dostawał Nurofenu?` still returns its note, now with real margin rather than `0.007`
-- [ ] 3.12 A plainly unrelated question still shows "Brak notatek pasujących do pytania."
-- [ ] 3.13 The measurement is re-run on the new value and recorded in `change.md` before Phase 4 begins
+- [x] 3.8 `Czy dostawał Nurofenu w lipcu?` returns the Nurofen note in the UI
+- [x] 3.9 `Czy miał gorączkę w lipcu?` returns the fever note
+- [x] 3.10 The bare `Nurofenu` returns the Nurofen note
+- [x] 3.11 `Czy dostawał Nurofenu?` still returns its note, now with real margin rather than `0.007`
+- [x] 3.12 A plainly unrelated question still shows "Brak notatek pasujących do pytania."
+- [x] 3.13 The measurement is re-run on the new value and recorded in `change.md` before Phase 4 begins
 
 ### Phase 4: Strip the period phrase
 

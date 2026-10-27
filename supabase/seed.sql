@@ -37,6 +37,14 @@
 
 -- One account, two children: enough to tell a per-child note set apart, which is what the
 -- `p_child_id` correctness filter needs in order to be visible in a measurement.
+-- The four `''` token columns at the end are not decoration and must not be "tidied" back to
+-- NULL. GoTrue scans them into non-nullable Go strings when it resolves an account, so a row that
+-- leaves them NULL makes the password grant fail with a 500 and the opaque message
+-- `{"code":500,"error_code":"unexpected_failure","msg":"Database error querying schema"}` -- which
+-- names neither the column nor the row, and looks like a broken local stack rather than a broken
+-- seed. Every column the table defaults sensibly is left to its default; these four are the ones
+-- where NULL is the default and NULL is unusable. A row GoTrue creates itself carries `''` here,
+-- which is how the difference was found.
 insert into auth.users (
   instance_id,
   id,
@@ -49,7 +57,11 @@ insert into auth.users (
   updated_at,
   last_sign_in_at,
   raw_app_meta_data,
-  raw_user_meta_data
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change
 ) values (
   '00000000-0000-0000-0000-000000000000',
   '5eed0000-0000-0000-0000-000000000001',
@@ -62,7 +74,11 @@ insert into auth.users (
   now(),
   now(),
   '{"provider":"email","providers":["email"]}'::jsonb,
-  '{}'::jsonb
+  '{}'::jsonb,
+  '',
+  '',
+  '',
+  ''
 );
 
 insert into auth.identities (

@@ -19,6 +19,11 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { SupabaseServerClient } from "@/lib/children";
 
+// A vector at a chosen cosine similarity -- the one thing this file could not express on its own.
+// The dependency runs one way only: that module reads no credentials and touches no database, so
+// `tests/unit/` can import it too, which is where its math is pinned.
+import { gradedVector } from "../support/graded-vector";
+
 const URL_ENV = "SUPABASE_URL";
 const ANON_KEY_ENV = "SUPABASE_ANON_KEY";
 const SERVICE_ROLE_KEY_ENV = "SUPABASE_SERVICE_ROLE_KEY";
@@ -189,10 +194,16 @@ export const SEARCH_IDS = {
   atWindowEndNote: `${FIXTURE_ID_PREFIX}00003000c104`,
   afterWindowNote: `${FIXTURE_ID_PREFIX}00003000c105`,
   fullTextOnlyNote: `${FIXTURE_ID_PREFIX}00003000c106`,
+  // The threshold notes get a child of their own (see SEARCH_FIXTURE's docstring): every
+  // `search_notes` call is scoped by `p_child_id`, so notes seeded here are invisible to -- and
+  // cannot change the outcome of -- the date-window and degraded-mode assertions on `child`.
+  thresholdChild: `${FIXTURE_ID_PREFIX}0000300000c2`,
+  aboveFloorNote: `${FIXTURE_ID_PREFIX}00003000c201`,
+  belowFloorNote: `${FIXTURE_ID_PREFIX}00003000c202`,
 };
 
 // A one-hot synthetic vector, never a real OpenAI embedding: cosine similarity of a vector with
-// itself is 1.0, comfortably over `search_notes`'s default `p_similarity_threshold` (0.5)
+// itself is 1.0, comfortably over `search_notes`'s default `p_similarity_threshold` (0.434)
 // regardless of how that default is later tuned. Reused as both the seeded `embedding` column
 // value on every "should be in the date window" note and as `p_query_embedding` in the RPC calls
 // below, so the date filter -- not an accidental threshold miss -- is what proves inclusion/
@@ -200,18 +211,50 @@ export const SEARCH_IDS = {
 export const SEARCH_ONE_HOT_EMBEDDING: number[] = new Array(1536).fill(0).map((_, i) => (i === 0 ? 1 : 0));
 
 /**
- * One account, one child, six notes -- for `tests/integration/notes-search.test.ts`. `nearNote`
- * sits mid-window and carries the one-hot embedding, serving double duty as both the no-date-range
- * semantic match and the date-window's "included" case. `beforeWindowNote`/`atWindowEndNote`/
- * `afterWindowNote` also carry the one-hot embedding, so the date filter alone is what excludes
- * them. `atWindowStartNote` proves the inclusive lower bound. `fullTextOnlyNote` carries no
- * embedding at all, for the degraded (`p_query_embedding: null`) full-text-only assertion.
+ * The measured default of `search_notes`'s `p_similarity_threshold`, from
+ * `supabase/migrations/20261027140907_recalibrate_search_notes_similarity_floor.sql`. Its
+ * provenance -- a 26-note Polish corpus in `supabase/seed.sql`, 18 frozen questions, overlapping
+ * bands and the 0.430 -> 0.438 gap this value is the midpoint of -- is recorded in that migration's
+ * header and in `context/changes/note-search-similarity-floor/change.md`.
+ */
+export const SEARCH_SIMILARITY_FLOOR = 0.434;
+
+// How far either side of the floor the two threshold notes sit. 0.02 is far outside float4's ~1e-7
+// (what `vector(1536)` costs in storage) and twenty times the +/-0.001 run-to-run spread of the
+// embeddings endpoint -- but the load-bearing property is that it is wider than the measured
+// 0.430 -> 0.438 gap in both directions. Moving the default anywhere outside that gap therefore
+// puts one of these two notes on the wrong side of it, and the threshold assertions in
+// notes-search.test.ts go red rather than silently following the constant.
+const SEARCH_FLOOR_MARGIN = 0.02;
+
+export const SEARCH_ABOVE_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR + SEARCH_FLOOR_MARGIN;
+export const SEARCH_BELOW_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR - SEARCH_FLOOR_MARGIN;
+
+/**
+ * One account, two children, eight notes -- for `tests/integration/notes-search.test.ts`.
+ *
+ * On `child`, six notes about dates and text. `nearNote` sits mid-window and carries the one-hot
+ * embedding, serving double duty as both the no-date-range semantic match and the date-window's
+ * "included" case. `beforeWindowNote`/`atWindowEndNote`/`afterWindowNote` also carry the one-hot
+ * embedding, so the date filter alone is what excludes them. `atWindowStartNote` proves the
+ * inclusive lower bound. `fullTextOnlyNote` carries no embedding at all, for the degraded
+ * (`p_query_embedding: null`) full-text-only assertion.
+ *
+ * On `thresholdChild`, two notes about nothing but the similarity floor: one at
+ * `SEARCH_ABOVE_FLOOR_SIMILARITY` and one at `SEARCH_BELOW_FLOOR_SIMILARITY`. They need their own
+ * child because the six notes above are counted as a complete set by the date-window assertion --
+ * a seventh and eighth note on `child` would break it. Their content is chosen to share no word
+ * with the query text that reads them, so the full-text arm cannot smuggle the below-floor note
+ * back in and the floor is the only thing deciding.
  */
 export const SEARCH_FIXTURE: Fixture = {
   email: "search.fixture@example.com",
   password: FIXTURE_PASSWORD,
   userId: SEARCH_IDS.user,
-  children: [{ id: SEARCH_IDS.child, name: "Search fixture child" }],
+  children: [
+    { id: SEARCH_IDS.child, name: "Search fixture child" },
+    { id: SEARCH_IDS.thresholdChild, name: "Search threshold fixture child" },
+  ],
   notes: [
     {
       id: SEARCH_IDS.nearNote,
@@ -253,6 +296,20 @@ export const SEARCH_FIXTURE: Fixture = {
       childId: SEARCH_IDS.child,
       occurredAt: "2026-05-01T09:00",
       content: "dzisiaj byl kaszel KASZELXYZ",
+    },
+    {
+      id: SEARCH_IDS.aboveFloorNote,
+      childId: SEARCH_IDS.thresholdChild,
+      occurredAt: "2026-07-04T12:00",
+      content: "pierwsza notatka progowa PROGXYZA",
+      embedding: gradedVector(SEARCH_ABOVE_FLOOR_SIMILARITY),
+    },
+    {
+      id: SEARCH_IDS.belowFloorNote,
+      childId: SEARCH_IDS.thresholdChild,
+      occurredAt: "2026-07-05T12:00",
+      content: "druga notatka progowa PROGXYZB",
+      embedding: gradedVector(SEARCH_BELOW_FLOOR_SIMILARITY),
     },
   ],
 };

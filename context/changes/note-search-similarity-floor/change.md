@@ -3,7 +3,7 @@ change_id: note-search-similarity-floor
 title: Próg podobieństwa 0,5 odcina trafione notatki przy odmienionych pytaniach
 status: implementing
 created: 2026-10-24
-updated: 2026-10-25
+updated: 2026-10-27
 archived_at: null
 ---
 
@@ -319,3 +319,150 @@ wartością, która ma zapas (0,004 na stronę) większy od szumu pomiaru.
 `0,430→0,438`, 13 wpuszczonych nie-trafień, oraz obie zostawione pozycje wyżej. Fixture w fazie 3
 siada na `0,434 ± 0,02`, czyli `0,454` i `0,414` — oba poza każdą wartością z luki, więc test
 czerwienieje przy ruchu progu w dowolną stronę.
+
+## Pomiar po fazie 3 (2026-10-27)
+
+**Co się zmieniło.** `supabase/migrations/20261027140907_recalibrate_search_notes_similarity_floor.sql`
+stawia `p_similarity_threshold float default 0.434`, a `CURRENT_THRESHOLD` w
+`scripts/measure-similarity.mjs` idzie na tę samą wartość w tym samym commicie — tak, jak wymaga
+nagłówek samego skryptu. Żaden inny parametr (`p_rrf_k`, `p_match_count`) nie został ruszony.
+
+**Przebieg.** `npx supabase db reset` (siedem migracji + `supabase/seed.sql`), potem
+`npm run backfill:embeddings` — 26 found, 26 embedded, 0 skipped — i
+`node scripts/measure-similarity.mjs`, exit 0. Korpus i zamrożony zbiór 18 pytań bez zmian.
+
+**Odtwarzalność względem fazy 2.** 455 z 468 wartości identyczne do trzech miejsc. 13 się rozeszło,
+maksymalnie o **0,002**, i 11 z tych 13 siedzi w jednej kolumnie — notatce `b004`. To szerszy
+rozjazd niż ≤0,001 z fazy 2 i ma inne źródło: tam przebiegi liczyły nowe wektory tylko dla pytań,
+tu `db reset` wyczyścił embeddingi, więc backfill policzył na nowo cały korpus. Rozjazd nie dotyka
+decyzji: sufit kolumny `b004` to `.405`, a **każda** wartość w przedziale `0,426 .. 0,442` — luka
+`0,430 → 0,438` plus margines po obu stronach — odtworzyła się co do trzeciego miejsca (13 wartości,
+0 rozjazdów). Próg stoi tam, gdzie faza 2 go postawiła.
+
+**Efekt progu na zamrożonym zbiorze.** Flaga `<- below` (notatka z `expect` pod progiem) spada z
+**8 na 4** z 18 pytań. Te cztery to: `Nurofenu` i `Nurofen` — gdzie `expect` to `a010`, ale
+`a011@.438` i `b007@.515`, też notatki o Nurofenie, próg przechodzą, więc rodzic dostaje odpowiedź —
+oraz `Co z uchem?` i `Czy uderzył się w głowę?`, dwie pozycje świadomie zostawione w §„Czego
+`0.434` nie naprawia". To daje **13/15 pytań odpowiadalnych z co najmniej jedną dobrą notatką** i
+**11/15 z notatką z `expect`** — dokładnie to, co przemiatanie progu przewidziało przed zmianą
+migracji.
+
+```
+Per-question bands:
+question                                expected  sim     best      sim     >=0.434what it isolates
+-----------------------------------------------------------------------------------------------------------
+Czy dostawał Nurofenu w lipcu?          a010      .439    a011      .600    4/26   odmiana + fraza okresu
+Czy dostawał Nurofen w lipcu?           a010      .516    a001      .543    6/26   forma podstawowa + fraza okresu
+Czy dostawał Nurofenu?                  a010      .463    a011      .640    4/26   odmiana, bez frazy
+Czy dostawał Nurofen?                   a010      .568    b007      .615    7/26   forma podstawowa, bez frazy
+Nurofenu                                a010      .280    a011      .438    1/26   samo słowo, odmiana <- below
+Nurofen                                 a010      .409    b007      .515    2/26   samo słowo, forma podstawowa <- below
+Jaka była najwyższa gorączka?           a010      .524    a001      .531    5/26   pełne zdanie, liczba w notatce
+gorączka                                a010      .489    a001      .494    3/26   samo słowo, kontrola dla zdania wyżej
+Czy brała antybiotyk?                   a008      .597    a008      .597    7/26   kategoria leku, nie nazwa
+Augmentin                               a008      .484    a008      .484    1/26   dokładna nazwa leku
+Kiedy było szczepienie w marcu?         a005      .523    a005      .523    1/26   fraza okresu + szczepienie
+Co z uchem?                             b008      .347    b004      .362    0/26   krótkie, eliptyczne pytanie <- below
+Czy uderzył się w głowę?                b012      .402    b012      .402    0/26   inne słowa niż w notatce <- below
+Ile waży?                               b002      .478    b001      .494    2/26   liczba, jednostka w notatce
+Czy dzisiaj coś się działo?             (none)      -     b010      .428    0/26   fraza okresu, brak notatki z dzisiaj
+Czy był u dentysty w zeszłym tygodniu?  a014      .608    a014      .608    6/26   fraza okresu poza okresem notatki
+Czy ma uczulenie na orzeszki?           (none)      -     a009      .453    2/26   brak odpowiedzi w korpusie
+Kiedy był pierwszy raz w kinie?         (none)      -     a004      .404    0/26   brak odpowiedzi w korpusie
+
+'expected' is the note a parent would call the right answer; '(none)' means the corpus has none.
+'<- below' marks an expected note the current threshold would drop -- a false negative.
+
+Observed range across all 468 value(s): -.003 .. .640 (spread .643).
+Values inside 0.37..0.49 (the current threshold +/-0.06): 93 of 468.
+```
+
+**Jedna liczba, która się pogorszyła, zapisana bez wygładzania.** Wskaźnik „too close to call" ze
+skryptu — wartości w `próg ± 0,06` — idzie z **36/468 na 93/468**. To nie jest regres decyzji, ale
+nie jest też nic: `0,434` siedzi w gęstym środku rozkładu, nie na jego brzegu, więc pasmo ±0,06
+łapie prawie cały obszar zachodzenia. Decyzja była podjęta na rozdzielczości **lokalnej** luki
+(`0,004` na stronę wobec ≤`0,002` zmierzonego rozjazdu, i `0` rozjazdu przy samej granicy), a nie na
+tym pasmie. `BAND_HALF_WIDTH` zostaje `0.06` — zmiana go teraz pod nową wartość progu byłaby
+dopasowaniem instrumentu do wyniku.
+
+**Co pinuje tę wartość.** `tests/integration/notes-search.test.ts` sieje dwie notatki na własnym
+dziecku, na wektorach z `tests/support/graded-vector.ts`, przy `0,454` i `0,414`. Sprawdzone oba
+kierunki: z domyślną wartością podmienioną z powrotem na `0.5` test czerwienieje
+(`expected [] to strictly equal [c201]`), po przywróceniu `0.434` znów przechodzi, a pozostałe
+cztery asercje w tym pliku zostają zielone w obu przebiegach.
+
+**Faza 4 może się zacząć.** Pomiar progu jest zamknięty i zapisany, więc efekt usunięcia frazy
+okresu będzie dawał się przypisać osobno.
+
+## Poprawka seeda — logowanie na zasiane konto (faza 3, 2026-10-27)
+
+**Korekta zapisu z fazy 1.** Nota „ADAPT (logowanie do zasianego konta)" wyżej twierdzi, że
+`rodzic@local.test` / `haslo123` daje się zalogować. Nie dawało się. Pierwsza próba obchodu pytań
+w UI (kryteria 3.8–3.12) skończyła się tym, że `/auth/signin` odrzucał to konto, a w jego miejsce
+powstało świeże, puste konto przez `/auth/signup` — i aplikacja wyglądała jak baza bez danych,
+chociaż 26 notatek z korpusu caly czas w niej siedziało.
+
+**Objaw.** Grant hasłowy GoTrue zwracał:
+
+```
+{"code":500,"error_code":"unexpected_failure","msg":"Database error querying schema"}
+```
+
+Komunikat nie nazywa ani kolumny, ani wiersza, więc czyta się jak zepsuty lokalny stack, a nie
+zepsuty seed.
+
+**Przyczyna.** `seed.sql` wstawiał wiersz do `auth.users` bez czterech kolumn tokenowych:
+`confirmation_token`, `recovery_token`, `email_change_token_new`, `email_change`. Ich domyślną
+wartością jest NULL, a GoTrue czyta je do nienullowalnych stringów Go przy rozwiązywaniu konta, więc
+skan wiersza wywala się przed sprawdzeniem hasła. Różnicę dało się zobaczyć przez porównanie wiersza
+z seeda z wierszem, który GoTrue założył sam przy rejestracji: ten drugi ma w tych czterech
+kolumnach `''`, i tylko w nich się różnił.
+
+**Naprawa.** `supabase/seed.sql` wstawia teraz te cztery kolumny jako `''`, z komentarzem nad
+insertem mówiącym dlaczego — żeby nikt ich nie „posprzątał" z powrotem do NULL. Wiersz w działającej
+bazie został dodatkowo załatany w miejscu (`update auth.users set … where email = 'rodzic@local.test'`),
+żeby obchód pytań nie wymagał kolejnego `db reset` i kolejnych 26 wywołań embeddingów. Po załataniu
+grant hasłowy zwraca token dla `5eed0000-0000-0000-0000-000000000001`. Sam insert z poprawionego
+seeda został sprawdzony przeciw prawdziwemu schematowi w transakcji z `rollback` (podstawione
+id/e-mail) — parsuje się i aplikuje.
+
+**Co z tego wynika dla fazy 1.** Kryterium 1.8 („korpus przeczytany i zaakceptowany") zostaje
+zaliczone — korpus był czytany z `seed.sql` i z bazy, nie przez UI. Ale zdanie z noty fazy 1 o
+logowaniu było nieprawdziwe w momencie zapisu i jest tutaj poprawione, a nie nadpisane.
+
+
+## Obchód ręczny w UI (faza 3, 2026-10-27)
+
+Kryteria 3.8-3.12 przeszedł użytkownik w aplikacji, na zasianym koncie `rodzic@local.test`, dziecko
+Ala (`5eed0000-0000-0000-0000-0000000000c1`). Zaliczone wszystkie pięć. Dwa wymagają zapisu, bo ich
+wynik nie jest tym, co tabela pomiaru przewidywała:
+
+**3.10 - samo `Nurofenu`.** Zwróciło notatkę o Nurofenie, więc kryterium w swoim brzmieniu jest
+spełnione: parent widzi notatkę, a nie komunikat „Brak notatek pasujących do pytania.". Zwróciło
+jednak `a011` („Rano 37,8. Dałam Nurofenu drugi raz, 5 ml"), nie `a010` („Gorączka 39,1 wieczorem.
+Nurofen o 21:30"), którą tabela trzymała jako `expect`. Przyczyna nie leży w progu. `a011` zawiera
+dosłownie formę „Nurofenu", więc łapie je nawet arm pełnotekstowy, a wektorowo stoi na .438, czyli
+nad 0.434. `a010` ma formę bazową „Nurofen", której `websearch_to_tsquery('simple', ...)` nie skleja
+z „Nurofenu", bo nie robi stemmingu polskiego, a kosinusowo stoi na .280 - pod każdym progiem, który
+w ogóle jest progiem. Odmienione zapytanie nie odzyska formy bazowej ani przez ten próg, ani przez
+fazę 4 (zdejmowanie frazy okresu): to osobny brak, brak stemmingu, i zostaje tu zapisany zamiast
+zaliczony po cichu.
+
+**3.11 - `Czy dostawał Nurofenu?`.** Zwróciło wszystkie notatki o Nurofenie i pochodnych, nie jedną.
+To jest ten realny margines, o który kryterium prosiło (przed zmianą ta notatka wchodziła z zapasem
+`0.007`), i jest zgodne z decyzją o faworyzowaniu recall - gałąź RRF i tak ucina do
+`p_match_count`. Gdyby kiedyś trzeba było to zacieśnić, kosztem jest właśnie recall, a nie ten próg.
+
+**Co to nie testowało.** Obchód szedł przez konto zasiane; świeże konto założone przy okazji
+(`marcin.zegunia@outlook.com`, jedno dziecko też o imieniu „Ala", zero notatek) pokazało przy okazji,
+że RLS działa - ale dwa dzieci o tym samym imieniu na dwóch kontach to realna pułapka przy
+diagnozie, bo puste dziecko wygląda w UI identycznie jak zasiane. Jedyne odróżnienie to prefiks id
+w URL (`5eed0000-` = zasiane).
+
+**Weryfikacja poprawki seeda pełnym resetem (2026-10-27, przed commitem fazy 3).** Łatka żywego
+wiersza i transakcja z `rollback` dowodziły tylko, że insert się aplikuje - nie, że świeży
+developer po `db reset` się zaloguje, a po to ta poprawka jest w pliku. Więc reset został powtórzony:
+`npx supabase db reset` (7 migracji + seed, bez błędu), potem grant hasłowy na dziewiczo zasiane
+konto bez żadnej łatki -> `HTTP 200`, `user = 5eed0000-0000-0000-0000-000000000001`. Następnie
+`backfill:embeddings` (26 znalezionych, 26 zembeddowanych), `test:db` (5 plików, 26 testów, PASS)
+i `test:int` (3 pliki, 11 testów, PASS) na odtworzonym korpusie.

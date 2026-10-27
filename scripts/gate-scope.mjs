@@ -24,7 +24,7 @@ const EXPECTED = {
   // npx eslint . -f json  -> array length. Exact: ESLint's scope is .gitignore-driven and
   // deterministic, so any movement is a deliberate change to what is linted. Adding a linted
   // file must bump this in the same commit -- re-derive the number, never guess the delta.
-  eslintFiles: { mode: "exact", value: 55 },
+  eslintFiles: { mode: "exact", value: 57 },
   // npx astro check -> "Result (N files):". Floor, not exact: @astrojs/check applies its own
   // ignore list rather than the raw tsconfig file set, so N can move without a code change. A
   // floor confines that to the one direction that matters -- shrinkage. It sits one above the
@@ -35,8 +35,9 @@ const EXPECTED = {
   // far more often than removed, and an exact count would make every new test a two-file commit
   // for no gain -- the direction that matters is a suite quietly getting smaller. Re-derive this
   // whenever a unit-test file is added: left at its old value it stops catching the one thing it
-  // is for. 72 passing tests across wall-clock.test.ts and date-range-parse.test.ts.
-  unitTestsPassed: { mode: "floor", value: 72 },
+  // is for. 97 passing tests across wall-clock.test.ts, date-range-parse.test.ts and
+  // graded-vector.test.ts.
+  unitTestsPassed: { mode: "floor", value: 97 },
 };
 
 function run(command) {

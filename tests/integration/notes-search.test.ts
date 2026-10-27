@@ -15,17 +15,23 @@
 //
 // The no-date-range branch gained a `p_similarity_threshold` floor in
 // 20261020200647_tune_search_notes_rrf_relevance.sql, so an unrelated note is no longer guaranteed
-// to come back with every query. This suite still only asserts that the matching note IS present
-// on that branch, never that another is absent: the floor's 0.5 default is explicitly unvalidated
-// against real Polish note text, so an absence assertion here would be pinning a number nobody has
-// measured yet. Absence is asserted only inside the date-bound branch, where the window itself --
-// not a threshold -- is what excludes a row.
+// to come back with every query. This suite used to refuse to assert absence on that branch,
+// because the floor's then-default 0.5 was explicitly unvalidated against real Polish note text
+// and an absence assertion would have pinned a number nobody had measured. That reason has expired:
+// 20261027140907_recalibrate_search_notes_similarity_floor.sql carries 0.434, derived from the
+// 26-note Polish corpus in `supabase/seed.sql` over 18 frozen questions, with the full
+// question x note table, the bands, the sweep and the admitted-negative count recorded in
+// `context/changes/note-search-similarity-floor/change.md` (`## Pomiar`). So the floor is now
+// asserted from BOTH sides, in the last describe block below -- two notes on a child of their own
+// at 0.434 +/- 0.02, one returned and one not, which is what makes a move of the constant in
+// either direction turn this suite red instead of silently following it.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { SupabaseServerClient } from "@/lib/children";
 import type { Note } from "@/lib/notes";
 
+import { GRADED_QUERY_VECTOR } from "../support/graded-vector";
 import {
   SEARCH_FIXTURE,
   SEARCH_IDS,
@@ -161,5 +167,36 @@ describe("search_notes degraded mode inside a date window", () => {
     // its absence proves the text arm still discriminates rather than the window becoming a
     // catch-all once the threshold was removed.
     expect(results.map((note) => note.id)).not.toContain(SEARCH_IDS.atWindowStartNote);
+  });
+});
+
+describe("search_notes similarity floor on the RRF branch", () => {
+  it("returns the note above the measured floor and not the one below it", async () => {
+    // The two notes on `thresholdChild` carry vectors from `tests/support/graded-vector.ts` at
+    // 0.434 + 0.02 and 0.434 - 0.02, and `GRADED_QUERY_VECTOR` is the vector those similarities are
+    // expressed against -- so the cosine the function computes is the number the fixture asked for,
+    // to within float4.
+    //
+    // Three things are deliberately absent from this call, and each one is what makes the floor the
+    // only thing deciding:
+    //   * no date range, so the RRF branch runs and its `semantic` CTE is where the gate sits;
+    //   * `p_query_text` shares no word with either note's content, so the full-text arm matches
+    //     neither and cannot carry the below-floor note in through the full outer join;
+    //   * the two notes live on their own child, so the six notes of the date-window assertions
+    //     above are out of scope and cannot contribute a row here either.
+    const results = await callSearchNotes({
+      childId: SEARCH_IDS.thresholdChild,
+      queryText: "pytanie bez wspolnych slow",
+      queryEmbedding: GRADED_QUERY_VECTOR,
+    });
+
+    expect(idsOf(results)).toStrictEqual([SEARCH_IDS.aboveFloorNote]);
+
+    // Stated separately so a failure reads as what it is. These two assertions fail in opposite
+    // directions: raise the default past 0.454 and the first goes red, lower it below 0.414 and the
+    // second does. A default anywhere outside the measured 0.430 -> 0.438 gap trips one of them.
+    const returnedIds = results.map((note) => note.id);
+    expect(returnedIds).toContain(SEARCH_IDS.aboveFloorNote);
+    expect(returnedIds).not.toContain(SEARCH_IDS.belowFloorNote);
   });
 });
