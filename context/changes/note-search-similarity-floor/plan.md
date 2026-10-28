@@ -436,15 +436,15 @@ The repo currently disagrees with itself about what the hosted project already h
 
 #### Automated
 
-- [x] 4.1 `npm run test:unit` passes, including every new strip case
-- [x] 4.2 `npm run test:int` passes with no change to existing assertions
-- [x] 4.3 `npm run lint` passes and `npx astro check` reports 0 errors
-- [x] 4.4 `npm run gate:scope` passes
-- [x] 4.5 `npm run gate:routes` and `npm run gate:build-output` pass
+- [x] 4.1 `npm run test:unit` passes, including every new strip case — d32e2d3
+- [x] 4.2 `npm run test:int` passes with no change to existing assertions — d32e2d3
+- [x] 4.3 `npm run lint` passes and `npx astro check` reports 0 errors — d32e2d3
+- [x] 4.4 `npm run gate:scope` passes — d32e2d3
+- [x] 4.5 `npm run gate:routes` and `npm run gate:build-output` pass — d32e2d3
 
 #### Manual
 
-- [ ] 4.6 `Czy dostawał Nurofenu w lipcu?` and `Czy miał gorączkę w lipcu?` return their notes
-- [ ] 4.7 A question that is only `w lipcu` returns that month's notes rather than an error or emptiness
-- [ ] 4.8 A question with no period phrase behaves exactly as it did after Phase 3
-- [x] 4.9 The measurement is re-run and recorded, attributing the similarity gain from the strip separately from the threshold change
+- [x] 4.6 `Czy dostawał Nurofenu w lipcu?` and `Czy miał gorączkę w lipcu?` return their notes — d32e2d3
+- [x] 4.7 A question that is only `w lipcu` returns that month's notes rather than an error or emptiness — d32e2d3
+- [x] 4.8 A question with no period phrase behaves exactly as it did after Phase 3 — d32e2d3
+- [x] 4.9 The measurement is re-run and recorded, attributing the similarity gain from the strip separately from the threshold change — d32e2d3

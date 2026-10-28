@@ -1,9 +1,9 @@
 ---
 change_id: note-search-similarity-floor
 title: Próg podobieństwa 0,5 odcina trafione notatki przy odmienionych pytaniach
-status: implementing
+status: implemented
 created: 2026-10-24
-updated: 2026-10-27
+updated: 2026-10-28
 archived_at: null
 ---
 
@@ -508,3 +508,15 @@ pusty niezależnie od wektora. Ale ogólne zdanie brzmi: strip przesuwa w górę
 trafienia, więc zjada część marginesu, który 0.434 miało nad pasmem prawdziwych negatywów. Próg
 został wybrany na wartościach przed stripem i tutaj zostaje — przesuwanie go w górę na podstawie
 jednego sufitu byłoby wybieraniem stałej na szumie, czego ta zmiana unikała od początku.
+
+## Obchód ręczny po fazie 4 (2026-10-28)
+
+Kryteria 4.6-4.8 przeszedł użytkownik w UI na `rodzic@local.test`, dziecko Ala
+(`5eed0000-0000-0000-0000-0000000000c1`), które ma w lipcu dokładnie dwie notatki (a010 z 14.07 i
+a011 z 15.07) -- więc każdy z trzech wyników dał się ocenić co do wiersza, a nie tylko „wygląda ok".
+Zaliczone wszystkie trzy, bez rozbieżności wobec oczekiwań: pytania z frazą okresu zwracają swoje
+notatki, samo `w lipcu` zwraca obie lipcowe notatki zamiast błędu albo pustki (nowa ścieżka, która
+w ogóle nie dotyka `search_notes`), a pytanie bez frazy zachowuje się jak po fazie 3.
+
+Plan jest wyczerpany: 37 z 37 pozycji Progress odhaczonych, cztery fazy zamknięte, migracja
+`20261027140907` jest na hostowanym projekcie i `gate:drift` zgadza 7 wersji po obu stronach.
