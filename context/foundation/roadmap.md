@@ -3,7 +3,7 @@ project: Dziennik dziecka
 version: 3
 status: draft
 created: 2026-09-22
-updated: 2026-10-21
+updated: 2026-10-28
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -49,7 +49,7 @@ Rodzic dwójki dzieci nie pamięta drobnych faktów o nich — pomiarów, objaw�
 | ID   | Change ID               | Outcome (user can …)                                                                                             | Prerequisites | PRD refs                                                                                | Status   | Issue |
 | ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------- | -------- | ----- |
 | S-03 | note-search-by-meaning  | rodzic pyta na stronie dziecka własnymi słowami i dostaje jego pasujące notatki z datami i linkami do źródła      | S-02          | FR-006, §Business Logic, §Success Criteria, §Non-Functional Requirements, §Non-Goals     | done    | —     |
-| S-04 | note-search-precision   | rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę, a nie tylko podobne znaczeniowo                       | S-03          | FR-006, §Business Logic                                                                 | proposed | —     |
+| S-04 | note-search-precision   | rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę, a nie tylko podobne znaczeniowo                       | S-03          | FR-006, §Business Logic                                                                 | parked   | —     |
 | S-05 | landing-product-identity | rodzic wchodzący na stronę widzi, że to Dziennik dziecka, i loguje się po polsku — bez śladu szablonu startowego  | —             | MS-01, §Access Control (ekran logowania)                                                | done        | —     |
 
 ## Baseline
@@ -98,7 +98,7 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
 - **Unknowns:**
   - Czy nieostrość dopasowania znaczeniowego jest w praktyce realnym problemem na tym zbiorze, czy tylko teoretycznym? Dopasowanie po temacie bywa zbyt pojemne (notatka „katar od trzech dni" leży blisko „gorączki", bo oba znaczą „dziecko choruje") — ale czy to przeszkadza, pokaże dopiero S-03 na prawdziwych pytaniach. — Owner: user. Block: no.
 - **Risk:** Dokłada ostrość tam, gdzie dopasowanie znaczeniowe jest z natury rozmyte, i to jest cała wartość tego kawałka. Idzie po S-03, bo bez działającego przepływu pytania nie ma czego wyostrzać. Ryzyko odwrotne niż zwykle: przy skali jednego rodzica i dwóch dzieci łatwo zbudować tu więcej, niż ktokolwiek kiedykolwiek użyje — jeśli po S-03 okaże się, że pytania są wyłącznie tematyczne i trafność wystarcza, ten kawałek należy zawęzić albo zaparkować, nie rozbudować.
-- **Status:** proposed
+- **Status:** parked — przesłanka zmierzona i odrzucona 2026-10-24, dokładnie po ścieżce, którą Risk powyżej przewidywał. W ośmiu zmierzonych pytaniach kolejność wyników była już poprawna, więc nie było czego wyostrzać; problem rodzica leżał w nigdy niezmierzonym progu podobieństwa. Pomiar: `context/archive/2026-10-23-note-search-precision/frame.md`. Dowiezione zamiast tego: `context/archive/2026-10-24-note-search-similarity-floor/`.
 
 ### S-05: Rodzic wchodzi na stronę i widzi Dziennik dziecka, nie szablon startowy
 
@@ -118,7 +118,7 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
 | Roadmap ID | Change ID              | Suggested issue title                                              | Ready for `/10x-plan` | Notes                                  | Issue |
 | ---------- | ---------------------- | ------------------------------------------------------------------ | --------------------- | -------------------------------------- | ----- |
 | S-03       | note-search-by-meaning | Rodzic pyta o notatki dziecka i dostaje pasujące notatki z datami  | yes                   | Run `/10x-plan note-search-by-meaning` | —     |
-| S-04       | note-search-precision  | Rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę          | no                    | Czeka na S-03                          | —     |
+| S-04       | note-search-precision  | Rodzic pyta o konkretne słowo i dostaje właśnie tę notatkę          | no                    | Zaparkowane — przesłanka odrzucona     | —     |
 | S-05       | landing-product-identity | Wejście do aplikacji przedstawia Dziennik dziecka, nie szablon startowy | yes                   | Run `/10x-plan landing-product-identity` | —     |
 
 > Zadania M-1 były prowadzone jako issues w GitHubie (`mrczeg1991/dziennik-dziecka`): #1, #2 plus pytania #3–#5 i zaparkowane #6–#8. Dla M-2 issues nie są jeszcze utworzone — kolumna `Issue` czeka na numery.
@@ -139,6 +139,7 @@ Brak — świadomie. Wszystkie warstwy przekrojowe (dane, logowanie, punkty wej�
 - **Generowane podsumowania tekstowe** — Why parked: PRD §Non-Goals (odpowiedź to lista notatek, nie podsumowanie) — ograniczenie wiążące wprost dla M-2.
 - **Import/eksport danych (np. PDF dla lekarza)** — Why parked: PRD §Non-Goals.
 - **Natywna aplikacja mobilna** — Why parked: PRD §Non-Goals (tylko web).
+- **S-04: wyostrzanie dopasowania do dokładnego słowa** — Why parked: przesłanka zmierzona i odrzucona (`context/archive/2026-10-23-note-search-precision/frame.md`) — ranking był już poprawny we wszystkich ośmiu zmierzonych pytaniach. To, co rodzic faktycznie zgłaszał, naprawiło `note-search-similarity-floor`: zmierzony próg zamiast zgadniętego `0.5`. Wracamy do tego tylko wtedy, gdy pojawi się pytanie, w którym notatka jedynie podobna znaczeniowo stanie WYŻEJ od notatki zawierającej szukane słowo.
 
 ## Milestone History
 
