@@ -1,9 +1,9 @@
 ---
 change_id: testing-gates-that-gate
 title: Gates that actually gate
-status: implementing
+status: implemented
 created: 2026-10-07
-updated: 2026-10-10
+updated: 2026-10-28
 archived_at: null
 ---
 
@@ -94,3 +94,29 @@ because directives filter only after the rule has already thrown. That entry is
 the cited source of Risk #7 and the concrete case the gate-integrity check must
 catch — but its `Rule:` and `Applies to:` fields are still `<to fill in>`.
 Closing them out belongs to this phase.
+
+## Domknięcie 5.7 — nocny sweep drift (2026-10-28)
+
+Ostatni otwarty wiersz Progress był zostawiony świadomie 2026-10-11: cron `23 5 * * *` nie zdążył
+odpalić, zanim faza 5 się zamknęła, a kryterium cron-owe nie może być zielone w momencie zamykania
+własnej fazy. Decyzją było traktować sweep jako stałe monitorowanie, z zaleceniem „sprawdź pierwszy
+przebieg; czerwony to realne znalezisko, nie formalność".
+
+**Sprawdzone, i pierwszy przebieg był czerwony — a z nim trzy następne.** Przebiegi z 2026-10-12,
+13, 14 i 15 (id `38254558197`, `38399797047`, `38548655673`, `38717332113`) padały w jobie `drift`
+z jedną przyczyną: `SUPABASE_ACCESS_TOKEN` nie był dostępny dla zdarzenia `schedule`, więc
+`supabase migration list` zwracał `LegacyPlatformAuthRequiredError`, a gate kończył się
+`FAIL  migration drift: the CLI's JSON is not a recognised shape`.
+
+To jest gate działający dokładnie jak zaprojektowany: brak sekretu **pada**, nie przemilcza — i to
+właśnie ta własność sprawiła, że brakujący sekret dał się zauważyć, zamiast przez cztery dni
+raportować zielono, nie sprawdzając niczego. Od 2026-10-16 sekret jest obecny i sweep jest zielony
+13 dni z rzędu (id `38883718151` … `40679752629`).
+
+**Druga połowa kryterium też sprawdzona**: log porównuje obie strony. Pierwszy zielony przebieg
+wypisał `local (supabase/migrations): 20260923221601, 20260927205447` przeciw `remote (project ***)`
+z tymi samymi dwiema wersjami i `PASS  migrations agree: 2 version(s) applied both sides`; przebieg
+`40679752629` robi to samo dla wszystkich 7 wersji.
+
+Czterodniowa luka jest zapisana, nie wygładzona. Gdyby ktoś czytał tylko ostatni przebieg,
+zobaczyłby 13 zielonych dni i nie dowiedziałby się, że sekret trzeba było dodać.
