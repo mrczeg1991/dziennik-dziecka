@@ -39,6 +39,39 @@ export async function listNotes(supabase: SupabaseServerClient, childId: string)
 }
 
 /**
+ * Lists one child's live notes whose `occurred_at` falls in `[start, end)` -- the same half-open
+ * window `parsePolishDateRange` produces, and the same bound arithmetic `search_notes`'s date
+ * branch applies, so the two cannot disagree about which day belongs to a month.
+ *
+ * Oldest occurrence first, matching that branch's own ordering rather than `listNotes`'s
+ * newest-first: a parent reading a period's notes is reading a sequence of events, and the date
+ * branch already established that direction for every date-bound search. Exists for the one
+ * question that leaves no search terms behind at all -- a question that was nothing but a period
+ * phrase -- where a ranked search has nothing to rank and the window is the whole answer.
+ */
+export async function listNotesInRange(
+  supabase: SupabaseServerClient,
+  childId: string,
+  range: { start: string; end: string },
+): Promise<Note[]> {
+  const { data, error } = await supabase
+    .from("notes")
+    .select("id, content, occurred_at, created_at, updated_at")
+    .eq("child_id", childId)
+    .is("deleted_at", null)
+    .gte("occurred_at", range.start)
+    .lt("occurred_at", range.end)
+    .order("occurred_at", { ascending: true })
+    .order("created_at", { ascending: true })
+    .overrideTypes<Note[], { merge: false }>();
+
+  if (error) {
+    throw error;
+  }
+  return data;
+}
+
+/**
  * Inserts one note owned by `userId` on one of that user's children. The policy's
  * `with check` rejects a `childId` belonging to another account. Returns the query
  * error, if any.

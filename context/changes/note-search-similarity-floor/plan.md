@@ -415,36 +415,36 @@ The repo currently disagrees with itself about what the hosted project already h
 
 #### Automated
 
-- [x] 3.1 `npx supabase db reset` applies the new migration cleanly
-- [x] 3.2 `npm run test:db` passes with no change to its existing assertion count
-- [x] 3.3 `npm run test:unit` passes, including the graded-vector math
-- [x] 3.4 `npm run test:int` passes, including the two new threshold assertions and every pre-existing assertion
-- [x] 3.5 Temporarily setting the migration's default to the old `0.5` makes the new integration assertion fail, then reverting makes it pass again
-- [x] 3.6 `npm run lint` passes and `npx astro check` reports 0 errors
-- [x] 3.7 `npm run gate:scope` passes after the counter is re-derived
+- [x] 3.1 `npx supabase db reset` applies the new migration cleanly — 9720b4a
+- [x] 3.2 `npm run test:db` passes with no change to its existing assertion count — 9720b4a
+- [x] 3.3 `npm run test:unit` passes, including the graded-vector math — 9720b4a
+- [x] 3.4 `npm run test:int` passes, including the two new threshold assertions and every pre-existing assertion — 9720b4a
+- [x] 3.5 Temporarily setting the migration's default to the old `0.5` makes the new integration assertion fail, then reverting makes it pass again — 9720b4a
+- [x] 3.6 `npm run lint` passes and `npx astro check` reports 0 errors — 9720b4a
+- [x] 3.7 `npm run gate:scope` passes after the counter is re-derived — 9720b4a
 
 #### Manual
 
-- [x] 3.8 `Czy dostawał Nurofenu w lipcu?` returns the Nurofen note in the UI
-- [x] 3.9 `Czy miał gorączkę w lipcu?` returns the fever note
-- [x] 3.10 The bare `Nurofenu` returns the Nurofen note
-- [x] 3.11 `Czy dostawał Nurofenu?` still returns its note, now with real margin rather than `0.007`
-- [x] 3.12 A plainly unrelated question still shows "Brak notatek pasujących do pytania."
-- [x] 3.13 The measurement is re-run on the new value and recorded in `change.md` before Phase 4 begins
+- [x] 3.8 `Czy dostawał Nurofenu w lipcu?` returns the Nurofen note in the UI — 9720b4a
+- [x] 3.9 `Czy miał gorączkę w lipcu?` returns the fever note — 9720b4a
+- [x] 3.10 The bare `Nurofenu` returns the Nurofen note — 9720b4a
+- [x] 3.11 `Czy dostawał Nurofenu?` still returns its note, now with real margin rather than `0.007` — 9720b4a
+- [x] 3.12 A plainly unrelated question still shows "Brak notatek pasujących do pytania." — 9720b4a
+- [x] 3.13 The measurement is re-run on the new value and recorded in `change.md` before Phase 4 begins — 9720b4a
 
 ### Phase 4: Strip the period phrase
 
 #### Automated
 
-- [ ] 4.1 `npm run test:unit` passes, including every new strip case
-- [ ] 4.2 `npm run test:int` passes with no change to existing assertions
-- [ ] 4.3 `npm run lint` passes and `npx astro check` reports 0 errors
-- [ ] 4.4 `npm run gate:scope` passes
-- [ ] 4.5 `npm run gate:routes` and `npm run gate:build-output` pass
+- [x] 4.1 `npm run test:unit` passes, including every new strip case
+- [x] 4.2 `npm run test:int` passes with no change to existing assertions
+- [x] 4.3 `npm run lint` passes and `npx astro check` reports 0 errors
+- [x] 4.4 `npm run gate:scope` passes
+- [x] 4.5 `npm run gate:routes` and `npm run gate:build-output` pass
 
 #### Manual
 
 - [ ] 4.6 `Czy dostawał Nurofenu w lipcu?` and `Czy miał gorączkę w lipcu?` return their notes
 - [ ] 4.7 A question that is only `w lipcu` returns that month's notes rather than an error or emptiness
 - [ ] 4.8 A question with no period phrase behaves exactly as it did after Phase 3
-- [ ] 4.9 The measurement is re-run and recorded, attributing the similarity gain from the strip separately from the threshold change
+- [x] 4.9 The measurement is re-run and recorded, attributing the similarity gain from the strip separately from the threshold change

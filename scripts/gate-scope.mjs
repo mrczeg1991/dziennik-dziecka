@@ -35,9 +35,9 @@ const EXPECTED = {
   // far more often than removed, and an exact count would make every new test a two-file commit
   // for no gain -- the direction that matters is a suite quietly getting smaller. Re-derive this
   // whenever a unit-test file is added: left at its old value it stops catching the one thing it
-  // is for. 97 passing tests across wall-clock.test.ts, date-range-parse.test.ts and
+  // is for. 135 passing tests across wall-clock.test.ts, date-range-parse.test.ts and
   // graded-vector.test.ts.
-  unitTestsPassed: { mode: "floor", value: 97 },
+  unitTestsPassed: { mode: "floor", value: 135 },
 };
 
 function run(command) {

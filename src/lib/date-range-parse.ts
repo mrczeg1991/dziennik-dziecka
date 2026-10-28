@@ -82,13 +82,47 @@ const MONTH_LOCATIVES: Record<string, number> = {
 };
 
 /**
- * Recognizes a bounded set of common Polish period phrases and converts one into a
- * `{ start, end }` pair of bare wall-clock strings (exclusive upper bound) in the same string
- * space `occurred_at` stores. Checked by plain substring, never a `\b` word-boundary regex:
- * Polish letters like `ł`/`ń`/`ą`/`ś`/`ę`/`ć`/`ź`/`ż` are not `\w` in JS's ASCII-only definition,
- * so a trailing `\b` after one of them silently fails to match. Returns `null` for an
- * unrecognized phrase (or none), letting the caller fall through to the ranked,
- * non-date-bound search mode.
+ * Every period phrase this module recognizes, in the order `parsePolishDateRange` resolves them --
+ * first match wins, so a question carrying two of them is answered by whichever stands earlier
+ * here. One list, read by both the parser and `stripPeriodPhrase`, is what keeps those two from
+ * ever disagreeing about which words the date filter already consumed: a phrase added to the
+ * parser alone would be stripped by nothing, and one added here alone would be stripped with no
+ * window to show for it.
+ */
+const MONTH_PHRASES: ReadonlyMap<string, number> = new Map(
+  Object.entries(MONTH_LOCATIVES).map(([locative, monthNum]) => [`w ${locative}`, monthNum]),
+);
+
+const PERIOD_PHRASES: readonly string[] = [
+  "dzisiaj",
+  "wczoraj",
+  "w zeszłym tygodniu",
+  "w ostatnim tygodniu",
+  "w tym tygodniu",
+  "w zeszłym miesiącu",
+  "w tym miesiącu",
+  "w zeszłym roku",
+  "w tym roku",
+  ...MONTH_PHRASES.keys(),
+];
+
+/**
+ * The first phrase from `PERIOD_PHRASES` occurring in `question`, or `null` for a question naming
+ * no recognized period. Checked by plain substring, never a `\b` word-boundary regex: Polish
+ * letters like `ł`/`ń`/`ą`/`ś`/`ę`/`ć`/`ź`/`ż` are not `\w` in JS's ASCII-only definition, so a
+ * trailing `\b` after one of them silently fails to match. A month name therefore has to carry
+ * its preposition (`w lipcu`) to be recognized, and a bare `lipcu` is not a period phrase.
+ */
+function findPeriodPhrase(question: string): string | null {
+  const lower = question.toLowerCase();
+  return PERIOD_PHRASES.find((phrase) => lower.includes(phrase)) ?? null;
+}
+
+/**
+ * Converts a recognized Polish period phrase into a `{ start, end }` pair of bare wall-clock
+ * strings (exclusive upper bound) in the same string space `occurred_at` stores. Returns `null`
+ * for an unrecognized phrase (or none), letting the caller fall through to the ranked,
+ * non-date-bound search mode. Which phrases count, and in what order, is `findPeriodPhrase`'s.
  *
  * "Today" is anchored exactly once, via `warsawWallClock(now)` -- the only place real-world
  * time zone matters. Every other computation is pure calendar-field arithmetic on that date
@@ -96,57 +130,90 @@ const MONTH_LOCATIVES: Record<string, number> = {
  * comparison against a stored wall clock would.
  */
 export function parsePolishDateRange(question: string, now: Date = new Date()): { start: string; end: string } | null {
-  const lower = question.toLowerCase();
+  const phrase = findPeriodPhrase(question);
+  if (phrase === null) {
+    return null;
+  }
+
   const today = warsawWallClock(now).slice(0, 10);
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
 
-  if (lower.includes("dzisiaj")) {
-    return { start: dayBound(today), end: dayBound(addDays(today, 1)) };
-  }
-  if (lower.includes("wczoraj")) {
-    return { start: dayBound(addDays(today, -1)), end: dayBound(today) };
-  }
-
-  if (lower.includes("w zeszłym tygodniu") || lower.includes("w ostatnim tygodniu")) {
-    const thisWeekStart = addDays(today, -(isoWeekday(today) - 1));
-    return { start: dayBound(addDays(thisWeekStart, -7)), end: dayBound(thisWeekStart) };
-  }
-  if (lower.includes("w tym tygodniu")) {
-    const thisWeekStart = addDays(today, -(isoWeekday(today) - 1));
-    return { start: dayBound(thisWeekStart), end: dayBound(addDays(thisWeekStart, 7)) };
-  }
-
-  if (lower.includes("w zeszłym miesiącu")) {
-    const last = shiftMonth(year, month, -1);
-    return { start: dayBound(monthKey(last.year, last.month)), end: dayBound(monthKey(year, month)) };
-  }
-  if (lower.includes("w tym miesiącu")) {
-    const next = shiftMonth(year, month, 1);
-    return { start: dayBound(monthKey(year, month)), end: dayBound(monthKey(next.year, next.month)) };
-  }
-
-  if (lower.includes("w zeszłym roku")) {
-    return { start: dayBound(`${year - 1}-01-01`), end: dayBound(`${year}-01-01`) };
-  }
-  if (lower.includes("w tym roku")) {
-    return { start: dayBound(`${year}-01-01`), end: dayBound(`${year + 1}-01-01`) };
-  }
-
-  for (const [locative, monthNum] of Object.entries(MONTH_LOCATIVES)) {
-    if (lower.includes(`w ${locative}`)) {
-      // A bare month name carries no year, so it means the most recent occurrence of that month:
-      // one later in the calendar than today's can only be last year's. Pinning it to the current
-      // year instead would answer "w lipcu" asked in March with a window months in the future,
-      // which matches no note and gives the parent no hint that a year was assumed at all.
-      const resolvedYear = monthNum > month ? year - 1 : year;
-      const next = shiftMonth(resolvedYear, monthNum, 1);
-      return {
-        start: dayBound(monthKey(resolvedYear, monthNum)),
-        end: dayBound(monthKey(next.year, next.month)),
-      };
+  switch (phrase) {
+    case "dzisiaj":
+      return { start: dayBound(today), end: dayBound(addDays(today, 1)) };
+    case "wczoraj":
+      return { start: dayBound(addDays(today, -1)), end: dayBound(today) };
+    case "w zeszłym tygodniu":
+    case "w ostatnim tygodniu": {
+      const thisWeekStart = addDays(today, -(isoWeekday(today) - 1));
+      return { start: dayBound(addDays(thisWeekStart, -7)), end: dayBound(thisWeekStart) };
     }
+    case "w tym tygodniu": {
+      const thisWeekStart = addDays(today, -(isoWeekday(today) - 1));
+      return { start: dayBound(thisWeekStart), end: dayBound(addDays(thisWeekStart, 7)) };
+    }
+    case "w zeszłym miesiącu": {
+      const last = shiftMonth(year, month, -1);
+      return { start: dayBound(monthKey(last.year, last.month)), end: dayBound(monthKey(year, month)) };
+    }
+    case "w tym miesiącu": {
+      const next = shiftMonth(year, month, 1);
+      return { start: dayBound(monthKey(year, month)), end: dayBound(monthKey(next.year, next.month)) };
+    }
+    case "w zeszłym roku":
+      return { start: dayBound(`${year - 1}-01-01`), end: dayBound(`${year}-01-01`) };
+    case "w tym roku":
+      return { start: dayBound(`${year}-01-01`), end: dayBound(`${year + 1}-01-01`) };
+    default:
+      break;
   }
 
-  return null;
+  const monthNum = MONTH_PHRASES.get(phrase);
+  if (monthNum === undefined) {
+    // Unreachable while this switch covers every non-month entry of PERIOD_PHRASES. Returning
+    // null rather than asserting keeps a future drift between the two a missed date window --
+    // the caller falls through to ranked search -- instead of a thrown error on a parent's
+    // question. The strip/parse parity tests are what catch the drift itself.
+    return null;
+  }
+
+  // A bare month name carries no year, so it means the most recent occurrence of that month:
+  // one later in the calendar than today's can only be last year's. Pinning it to the current
+  // year instead would answer "w lipcu" asked in March with a window months in the future,
+  // which matches no note and gives the parent no hint that a year was assumed at all.
+  const resolvedYear = monthNum > month ? year - 1 : year;
+  const next = shiftMonth(resolvedYear, monthNum, 1);
+  return {
+    start: dayBound(monthKey(resolvedYear, monthNum)),
+    end: dayBound(monthKey(next.year, next.month)),
+  };
+}
+
+/**
+ * The question with the period phrase the date filter already consumed taken out, so those words
+ * stop reaching the text query and the embedding as if a parent had typed them as search terms.
+ * `parsePolishDateRange` keeps seeing the raw question; only the search arms see this.
+ *
+ * Returns the question unchanged when no phrase is recognized, and `""` when the question was
+ * nothing but a period phrase. That empty string is a real answer, not a failure: it means the
+ * window alone decides the result, and a caller that treats it as an empty question would answer
+ * `w lipcu` with nothing. Only the one phrase `findPeriodPhrase` matched is removed, matching
+ * exactly what the date filter consumed -- a question repeating it keeps the second copy.
+ */
+export function stripPeriodPhrase(question: string): string {
+  const phrase = findPeriodPhrase(question);
+  if (phrase === null) {
+    return question;
+  }
+
+  // Removed from the original by a case-insensitive regex rather than by an index into the
+  // lowercased copy: a case fold can change a string's length (`İ` folds to two code points),
+  // which would shift every index after it and cut the wrong characters. Every entry of
+  // PERIOD_PHRASES is letters and a space, so none of it is regex syntax needing an escape.
+  return question
+    .replace(new RegExp(phrase, "i"), " ")
+    .replace(/\s+/g, " ")
+    .replace(/ ([?!.,;:])/g, "$1")
+    .trim();
 }

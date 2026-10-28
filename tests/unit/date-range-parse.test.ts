@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDateRange, parsePolishDateRange } from "@/lib/date-range-parse";
+import { formatDateRange, parsePolishDateRange, stripPeriodPhrase } from "@/lib/date-range-parse";
 
 // All non-DST cases are anchored at a single fixed instant per describe block, picked so the
 // Poland wall clock lands well inside the day (never near midnight), so the date key under test
@@ -232,5 +232,114 @@ describe("parsePolishDateRange — unrecognized input", () => {
 
   it("returns null for an unrecognized period phrase", () => {
     expect(parsePolishDateRange("w przyszłym tygodniu", now)).toBeNull();
+  });
+});
+
+describe("stripPeriodPhrase", () => {
+  // Same instant as the blocks above, for the parity assertions that call the parser.
+  const now = new Date("2026-07-15T12:00:00Z");
+
+  it("removes a month phrase and closes the gap before the question mark", () => {
+    expect(stripPeriodPhrase("Czy dostawał Nurofenu w lipcu?")).toBe("Czy dostawał Nurofenu?");
+  });
+
+  it("removes a phrase from mid-sentence", () => {
+    expect(stripPeriodPhrase("Czy dzisiaj coś się działo?")).toBe("Czy coś się działo?");
+  });
+
+  it("removes a phrase ending the sentence with no punctuation", () => {
+    expect(stripPeriodPhrase("Co jadła wczoraj")).toBe("Co jadła");
+  });
+
+  it("removes a multi-word phrase", () => {
+    expect(stripPeriodPhrase("Czy był u dentysty w zeszłym tygodniu?")).toBe("Czy był u dentysty?");
+  });
+
+  it("matches case-insensitively, like the parser", () => {
+    expect(stripPeriodPhrase("W LIPCU coś było")).toBe("coś było");
+  });
+
+  it("returns an empty string for a question that is only a period phrase", () => {
+    expect(stripPeriodPhrase("w lipcu")).toBe("");
+    expect(stripPeriodPhrase("dzisiaj")).toBe("");
+    expect(stripPeriodPhrase("  w tym tygodniu  ")).toBe("");
+  });
+
+  it("leaves a question with no recognized phrase exactly as it came", () => {
+    expect(stripPeriodPhrase("Czy dostawał Nurofenu?")).toBe("Czy dostawał Nurofenu?");
+    expect(stripPeriodPhrase("")).toBe("");
+  });
+
+  it("removes only the phrase the date filter consumed, not a second copy of it", () => {
+    expect(stripPeriodPhrase("w lipcu czy w lipcu?")).toBe("czy w lipcu?");
+  });
+
+  it("strips a month name reached by bare substring, because the parser recognizes it that way too", () => {
+    // `w lipcu` occurs inside "Nurofenów lipcu" across the word boundary, and the module matches
+    // period phrases by plain substring on purpose (a trailing `` after `ł`/`ó` never matches in
+    // JS). So the parser answers this with July's window, and the strip has to agree -- an ugly
+    // result is the correct one here, and a `` guard that "fixed" it would break the phrases
+    // this module exists to recognize.
+    expect(parsePolishDateRange("Nurofenów lipcu", now)).toEqual({
+      start: "2026-07-01T00:00",
+      end: "2026-08-01T00:00",
+    });
+    expect(stripPeriodPhrase("Nurofenów lipcu")).toBe("Nurofenó");
+  });
+
+  it("leaves a month name with no preposition alone, exactly as the parser ignores it", () => {
+    expect(parsePolishDateRange("lipcu bez przyimka", now)).toBeNull();
+    expect(stripPeriodPhrase("lipcu bez przyimka")).toBe("lipcu bez przyimka");
+  });
+
+  // The central assertion: the strip changes the question if and only if the parser found a
+  // window in it. Anything else means the date filter consumed words the search arms still see,
+  // or the search arms lost words no date filter ever used.
+  const WITH_PHRASE = [
+    "Co się działo dzisiaj?",
+    "Co jadła wczoraj",
+    "Czy był chory w zeszłym tygodniu?",
+    "Czy był chory w ostatnim tygodniu?",
+    "Czy był chory w tym tygodniu?",
+    "Co było w zeszłym miesiącu?",
+    "Co było w tym miesiącu?",
+    "Co było w zeszłym roku?",
+    "Co było w tym roku?",
+    "Czy chorował w styczniu?",
+    "Czy chorował w lutym?",
+    "Czy chorował w marcu?",
+    "Czy chorował w kwietniu?",
+    "Czy chorował w maju?",
+    "Czy chorował w czerwcu?",
+    "Czy chorował w lipcu?",
+    "Czy chorował w sierpniu?",
+    "Czy chorował w wrześniu?",
+    "Czy chorował w październiku?",
+    "Czy chorował w listopadzie?",
+    "Czy chorował w grudniu?",
+  ];
+
+  const WITHOUT_PHRASE = [
+    "Czy dostawał Nurofenu?",
+    "Nurofen",
+    "Co z uchem?",
+    "Ile waży?",
+    "lipcu bez przyimka",
+    // The parser knows "w wrześniu" and not the form a Pole actually writes, "we wrześniu": its
+    // month table is keyed on `w ` + locative, and `we` is a different string. Pinned here as
+    // current behaviour rather than fixed, because widening the recognized set is a change to what
+    // the date filter consumes, not to the strip -- and the two have to keep agreeing.
+    "Czy chorował we wrześniu?",
+    "",
+  ];
+
+  it.each(WITH_PHRASE)("strips %s, which the parser recognizes", (question) => {
+    expect(parsePolishDateRange(question, now)).not.toBeNull();
+    expect(stripPeriodPhrase(question)).not.toBe(question);
+  });
+
+  it.each(WITHOUT_PHRASE)("leaves %s untouched, which the parser does not recognize", (question) => {
+    expect(parsePolishDateRange(question, now)).toBeNull();
+    expect(stripPeriodPhrase(question)).toBe(question);
   });
 });

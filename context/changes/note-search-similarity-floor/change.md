@@ -466,3 +466,45 @@ developer po `db reset` się zaloguje, a po to ta poprawka jest w pliku. Więc r
 konto bez żadnej łatki -> `HTTP 200`, `user = 5eed0000-0000-0000-0000-000000000001`. Następnie
 `backfill:embeddings` (26 znalezionych, 26 zembeddowanych), `test:db` (5 plików, 26 testów, PASS)
 i `test:int` (3 pliki, 11 testów, PASS) na odtworzonym korpusie.
+
+## Pomiar po fazie 4 — ile daje strip, osobno od progu (2026-10-27)
+
+Kryterium 4.9. Dwa przebiegi, bo atrybucja wymaga rozdzielenia dwóch rzeczy, które faza 3 i faza 4
+zmieniły niezależnie.
+
+**Przebieg 1: zamrożony zestaw bez zmian.** `node scripts/measure-similarity.mjs`, exit 0, 18 pytań
+x 26 notatek. Wartości odtwarzają się co do trzeciego miejsca względem fazy 3 — te same `.439`,
+`.516`, `.463`, `.568`, `.280`, `.409`, `.524`, `.489`, `.597`, `.484`, `.523`, `.347`, `.402`,
+`.478`, `.428`, `.608`, `.453`, `.404`, te same 4 flagi `<- below`, ten sam zakres `-.003 .. .640`.
+To jest kontrola: **faza 4 nie poruszyła decyzji o progu.** Skrypt mierzy pytania tak, jak zostały
+napisane, więc dalej opisuje świat przed stripem, i dalej uzasadnia 0.434.
+
+**Przebieg 2: atrybucja stripa.** Formy po stripie wzięte z prawdziwej `stripPeriodPhrase`, nie z
+kopii algorytmu w skrypcie (jednorazowy test wypisał je do pliku, skrypt pomiarowy je wczytał).
+Kosinus do notatki oczekiwanej, surowo kontra po stripie:
+
+| pytanie | oczekiwana | surowo | po stripie | delta |
+| --- | --- | --- | --- | --- |
+| `Czy dostawał Nurofenu w lipcu?` | a010 | .439 | .463 | **+.024** |
+| `Czy dostawał Nurofen w lipcu?` | a010 | .516 | .568 | **+.052** |
+| `Kiedy było szczepienie w marcu?` | a005 | .523 | .505 | **-.018** |
+| `Czy był u dentysty w zeszłym tygodniu?` | a014 | .608 | .646 | **+.038** |
+| `Czy dzisiaj coś się działo?` | brak | - | - | sufit szumu .428 -> .445 |
+
+**Zysk: +.024 do +.052 na trzech z czterech odpowiadalnych pytań z frazą.** Niezależna kontrola
+spójności: forma po stripie pytania pierwszego to dosłownie `Czy dostawał Nurofenu?`, które w
+zamrożonym zestawie jest osobnym wierszem, embedowanym osobno — i czyta `.463`, dokładnie tyle samo.
+
+**Strip nie jest jednostronnie dobry, i to jest ustalenie, nie przypis.** `Kiedy było szczepienie
+w marcu?` **traci** `.018`, bo notatka a005 sama dotyczy marca: fraza okresu była tam informacją o
+treści, nie szumem do wyrzucenia. Zostaje `.505`, czyli wysoko nad 0.434, więc nic się dla rodzica
+nie zmienia — ale założenie „fraza zawsze rozcieńcza pytanie", na którym ta faza stoi, jest
+prawdziwe przeciętnie, a nie zawsze.
+
+**Strip podnosi też pasmo szumu.** Sufit dla `Czy dzisiaj coś się działo?` (pytanie, na które korpus
+nie ma odpowiedzi) idzie `.428 -> .445`, czyli **przechodzi nad 0.434**. Dla tego pytania jest to
+bez skutku, bo gałąź datowa i tak nie ma w okienku „dzisiaj" ani jednej notatki, więc wynik jest
+pusty niezależnie od wektora. Ale ogólne zdanie brzmi: strip przesuwa w górę oba pasma, nie tylko
+trafienia, więc zjada część marginesu, który 0.434 miało nad pasmem prawdziwych negatywów. Próg
+został wybrany na wartościach przed stripem i tutaj zostaje — przesuwanie go w górę na podstawie
+jednego sufitu byłoby wybieraniem stałej na szumie, czego ta zmiana unikała od początku.
