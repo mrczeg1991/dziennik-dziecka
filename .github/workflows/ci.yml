@@ -76,9 +76,12 @@ jobs:
           supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
           supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' > supabase.env
       # Position is load-bearing, and two steps now depend on it: the database
-      # is migrated and holds zero rows only here. After the smoke walk below it
-      # holds whatever that walk left behind — scripts/smoke.mjs performs no
-      # cleanup. The policy tests roll each file back, and the integration suite
+      # holds nothing but the committed seed corpus only here. supabase/seed.sql
+      # is applied by `supabase start` ([db.seed] enabled = true), so this is one
+      # account, two children and 26 notes under the 5eed0000- id prefix — not an
+      # empty database, which this comment used to claim. After the smoke walk
+      # below it also holds whatever that walk left behind — scripts/smoke.mjs
+      # performs no cleanup. The policy tests roll each file back, and the integration suite
       # seeds and deletes by a reserved id prefix, so neither strictly requires
       # an empty database; both sit here anyway so that a failure is about the
       # code under test and not about residue, and so neither is skipped when a

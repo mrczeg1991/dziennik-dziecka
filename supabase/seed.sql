@@ -1,3 +1,11 @@
+-- LOCAL ONLY. Never apply this file to anything but a local stack: not with
+-- `supabase db reset --linked`, not with `--db-url` pointed anywhere else, not by hand against a
+-- hosted database. It creates a usable account whose password is published in this repository
+-- (see LOCAL LOGIN below), and `[db.seed] enabled = true` means `db reset` and a fresh
+-- `supabase start` apply it without asking. Nothing here constrains the target host, so this
+-- comment is the only thing standing between the two commands -- the note corpus itself is
+-- harmless, the account is not.
+--
 -- Calibration corpus for `note-search-similarity-floor`. Applied automatically by
 -- `npx supabase db reset` (`supabase/config.toml` -> `[db.seed] sql_paths = ["./seed.sql"]`),
 -- after every migration has run.

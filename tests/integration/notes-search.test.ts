@@ -10,7 +10,7 @@
 // No real OpenAI call, ever, and no `vi.mock` (this codebase has none): every embedding here is a
 // precomputed, synthetic vector seeded straight into the `embedding` column. `SEARCH_ONE_HOT_EMBEDDING`
 // is reused as both the seeded value and the `p_query_embedding` argument, so cosine similarity of
-// a vector with itself (1.0) trivially clears `search_notes`'s default 0.5 similarity threshold --
+// a vector with itself (1.0) trivially clears `search_notes`'s default 0.434 similarity threshold --
 // proving the *date* boundary is what includes/excludes a row, not an accidental threshold miss.
 //
 // The no-date-range branch gained a `p_similarity_threshold` floor in

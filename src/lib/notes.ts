@@ -48,6 +48,12 @@ export async function listNotes(supabase: SupabaseServerClient, childId: string)
  * branch already established that direction for every date-bound search. Exists for the one
  * question that leaves no search terms behind at all -- a question that was nothing but a period
  * phrase -- where a ranked search has nothing to rank and the window is the whole answer.
+ *
+ * This makes a SECOND read path for date-bound search, beside `search_notes`'s own date branch,
+ * and that is deliberate: that branch requires one of its two arms to match, and a blank text
+ * query with a null embedding fires neither, so it would answer `w lipcu` with nothing. The
+ * obligation that comes with the second path: if a `limit` is ever added, it has to land here AND
+ * on the SQL date branch in the same change, or the two will disagree about what a window contains.
  */
 export async function listNotesInRange(
   supabase: SupabaseServerClient,

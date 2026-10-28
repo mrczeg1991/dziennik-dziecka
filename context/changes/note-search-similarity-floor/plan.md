@@ -173,6 +173,8 @@ Produce the similarity table over the committed corpus and derive the threshold 
 
 **Contract**: If the bands are separated, take the midpoint of the empty gap. If they overlap, set the value just below the lowest true positive and record how many true negatives that admits — favouring recall, because the parent would rather scan one extra note than miss the one they were looking for, the RRF branch truncates to ten anyway, and the date branch's contract is completeness.
 
+**What actually happened, recorded here because this clause no longer governs the shipped value**: the bands overlapped (`0.247..0.481`), and this rule read literally gives ≈`0.246` — which admits 142 of the 468 measured values and so *is* the floor removal the `## What We're NOT Doing` list forbids as its first entry. The two clauses contradict each other on this data. The resolution, the threshold sweep behind it and the user's acceptance are in `change.md` under `### Reguła, jej sprzeczność i adaptacja` and `### Decyzja (2026-10-26)`; the landed value is `0.434`, the midpoint of the only gap of width ≥ 0.008 in the decision window. **Cite `change.md`, not this clause, as the derivation of `0.434`.**
+
 ### Success Criteria:
 
 #### Automated Verification:

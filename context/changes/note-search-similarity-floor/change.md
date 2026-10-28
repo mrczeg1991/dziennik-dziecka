@@ -1,7 +1,7 @@
 ---
 change_id: note-search-similarity-floor
 title: Próg podobieństwa 0,5 odcina trafione notatki przy odmienionych pytaniach
-status: implemented
+status: impl_reviewed
 created: 2026-10-24
 updated: 2026-10-28
 archived_at: null
@@ -520,3 +520,20 @@ w ogóle nie dotyka `search_notes`), a pytanie bez frazy zachowuje się jak po f
 
 Plan jest wyczerpany: 37 z 37 pozycji Progress odhaczonych, cztery fazy zamknięte, migracja
 `20261027140907` jest na hostowanym projekcie i `gate:drift` zgadza 7 wersji po obu stronach.
+
+## Korekta cytatu w nagłówku migracji (impl-review, 2026-10-28)
+
+Nagłówek `20261027140907_recalibrate_search_notes_similarity_floor.sql:9-10` podaje jako cytat
+notatki: „Gorączka 39,1 wieczorem. Nurofen 5 ml o 21:00." **Takiej notatki nie ma w korpusie.**
+Zasiane `a010` (`seed.sql:198`) brzmi: „Gorączka 39,1 wieczorem. Nurofen o 21:30, czopek
+niepotrzebny. Dzwoniłam na nocną pomoc." Cytowany tekst pochodzi najpewniej z wcześniejszego,
+czteronotatkowego pomiaru opisanego w `../note-search-precision/frame.md`, a nie z `seed.sql`,
+który ten sam nagłówek wskazuje jako korpus — więc jako zapis proweniencji wskazuje na nic.
+
+**Dlaczego poprawka jest tutaj, a nie w migracji.** Repo ma zasadę, że migracji nie edytuje się w
+miejscu, a ta jest już zaaplikowana lokalnie i wypchnięta na hostowany projekt. Sprawdzone, nie
+założone: `supabase_migrations.schema_migrations.statements` przechowuje **cały** tekst pliku razem
+z komentarzami (8232 znaki dla tej wersji), więc edycja choćby komentarza rozjeżdża plik w repo z
+tym, co zapisane jako zaaplikowane. Objaw merytoryczny — że 0.5 odcinało trafioną notatkę o
+Nurofenie przy odmienionym pytaniu — jest prawdziwy i potwierdzony pomiarem; nieprawdziwy jest
+tylko dosłowny cytat. Ta sekcja jest jego sprostowaniem.

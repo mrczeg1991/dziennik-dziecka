@@ -10,6 +10,23 @@ export interface SearchResult {
 }
 
 /**
+ * Whether anything a parent could be searching FOR survives in `text`. `stripPeriodPhrase` removes
+ * the phrase and tidies whitespace, but it does not invent an empty string out of punctuation: a
+ * question that was only a period phrase plus a question mark leaves `"?"`. Emptiness for the
+ * search arms therefore has to mean "no letters and no digits left", never `=== ""`.
+ *
+ * Gating on the stricter test is what shipped the bug this replaced: `w lipcu?` skipped the
+ * window-only branch below and went to the RPC, where `websearch_to_tsquery('simple', '?')` is an
+ * empty tsquery and the embedding of `"?"` reaches 0.163 against the very notes it should have
+ * returned -- under any floor. So the punctuated form of the question answered "Brak notatek
+ * pasujących do pytania." while the bare form returned the month, and the parent paid for an
+ * embedding call to find that out.
+ */
+function hasSearchableText(text: string): boolean {
+  return /[\p{L}\p{N}]/u.test(text);
+}
+
+/**
  * Answers one free-text question about a child's notes. Parses a recognized Polish period
  * phrase into a hard date window (or `null`, falling through to ranked search), removes that
  * phrase from the text the search arms see, embeds what is left, and lets `search_notes` do the
@@ -39,7 +56,7 @@ export async function searchNotes(
   // embedding is pulled toward the phrase instead of the subject the parent asked about.
   const queryText = stripPeriodPhrase(question);
 
-  if (queryText === "" && dateRange !== null) {
+  if (!hasSearchableText(queryText) && dateRange !== null) {
     // A question that was nothing but a period phrase leaves no search terms at all, and the date
     // branch of `search_notes` still requires one of its two arms to match: a blank text query
     // matches no row and a null embedding switches the vector arm off, so routing `w lipcu` through
@@ -49,9 +66,10 @@ export async function searchNotes(
     return { results: await listNotesInRange(supabase, childId, dateRange), degraded: false, dateRange };
   }
 
-  // Never called with empty input: a question with no words left is the branch above, and an empty
-  // question is answered by an empty result rather than by a billed call for the zero vector.
-  const embedding = queryText === "" ? null : await embedText(queryText);
+  // Never called without searchable text: a question with no words left is the branch above, and a
+  // question that was empty to begin with is answered by an empty result rather than by a billed
+  // call for the zero vector.
+  const embedding = hasSearchableText(queryText) ? await embedText(queryText) : null;
 
   const response = await supabase.rpc("search_notes", {
     p_child_id: childId,
@@ -72,5 +90,5 @@ export async function searchNotes(
   // `src/lib/notes.ts`'s hand-written row types already accept instead of `supabase gen types` --
   // so an explicit assertion stands in for `.overrideTypes()` here.
   const results = (response.data as Note[] | null) ?? [];
-  return { results, degraded: queryText !== "" && embedding === null, dateRange };
+  return { results, degraded: hasSearchableText(queryText) && embedding === null, dateRange };
 }

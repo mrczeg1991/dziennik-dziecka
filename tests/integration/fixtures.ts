@@ -18,6 +18,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { SupabaseServerClient } from "@/lib/children";
+import { warsawWallClock } from "@/lib/wall-clock";
 
 // A vector at a chosen cosine similarity -- the one thing this file could not express on its own.
 // The dependency runs one way only: that module reads no credentials and touches no database, so
@@ -200,7 +201,26 @@ export const SEARCH_IDS = {
   thresholdChild: `${FIXTURE_ID_PREFIX}0000300000c2`,
   aboveFloorNote: `${FIXTURE_ID_PREFIX}00003000c201`,
   belowFloorNote: `${FIXTURE_ID_PREFIX}00003000c202`,
+  // The window-only notes get a child of their own for the same reason the threshold notes do.
+  windowChild: `${FIXTURE_ID_PREFIX}0000300000c3`,
+  todayEarlyNote: `${FIXTURE_ID_PREFIX}00003000c301`,
+  todayLateNote: `${FIXTURE_ID_PREFIX}00003000c302`,
+  outsideTodayNote: `${FIXTURE_ID_PREFIX}00003000c303`,
 };
+
+/**
+ * Today's Warsaw date key, so the window-only assertions do not expire. A fixture pinned to a
+ * literal month would stop exercising anything the moment the calendar passed it: `dzisiaj`
+ * resolves against the clock at call time, and a window with no seeded note in it makes the
+ * assertion vacuous rather than red. Read through `warsawWallClock` -- the same helper the parser
+ * anchors on, whose own correctness is pinned by tests/unit/wall-clock.test.ts -- rather than
+ * recomputing a Warsaw date here.
+ *
+ * Both seeded times sit at midday so neither lands near a day boundary; a run that straddles
+ * Warsaw midnight is the one case this cannot cover, and it would fail loudly rather than pass
+ * wrongly.
+ */
+const TODAY_WALL_CLOCK_DATE = warsawWallClock(new Date()).slice(0, 10);
 
 // A one-hot synthetic vector, never a real OpenAI embedding: cosine similarity of a vector with
 // itself is 1.0, comfortably over `search_notes`'s default `p_similarity_threshold` (0.434)
@@ -254,6 +274,7 @@ export const SEARCH_FIXTURE: Fixture = {
   children: [
     { id: SEARCH_IDS.child, name: "Search fixture child" },
     { id: SEARCH_IDS.thresholdChild, name: "Search threshold fixture child" },
+    { id: SEARCH_IDS.windowChild, name: "Search window-only fixture child" },
   ],
   notes: [
     {
@@ -310,6 +331,27 @@ export const SEARCH_FIXTURE: Fixture = {
       occurredAt: "2026-07-05T12:00",
       content: "druga notatka progowa PROGXYZB",
       embedding: gradedVector(SEARCH_BELOW_FLOOR_SIMILARITY),
+    },
+    // The window-only notes. No `embedding` on purpose: the path they exercise never embeds
+    // anything, and seeding a vector here would hide a regression that started calling the
+    // embeddings endpoint for a question that has no words left in it.
+    {
+      id: SEARCH_IDS.todayEarlyNote,
+      childId: SEARCH_IDS.windowChild,
+      occurredAt: `${TODAY_WALL_CLOCK_DATE}T09:00`,
+      content: "poranna notatka okienkowa OKNOXYZA",
+    },
+    {
+      id: SEARCH_IDS.todayLateNote,
+      childId: SEARCH_IDS.windowChild,
+      occurredAt: `${TODAY_WALL_CLOCK_DATE}T15:00`,
+      content: "popoludniowa notatka okienkowa OKNOXYZB",
+    },
+    {
+      id: SEARCH_IDS.outsideTodayNote,
+      childId: SEARCH_IDS.windowChild,
+      occurredAt: "2026-01-02T12:00",
+      content: "notatka poza okienkiem dzisiejszym OKNOXYZC",
     },
   ],
 };

@@ -276,15 +276,31 @@ describe("stripPeriodPhrase", () => {
 
   it("strips a month name reached by bare substring, because the parser recognizes it that way too", () => {
     // `w lipcu` occurs inside "Nurofenów lipcu" across the word boundary, and the module matches
-    // period phrases by plain substring on purpose (a trailing `` after `ł`/`ó` never matches in
+    // period phrases by plain substring on purpose (a trailing `\b` after `ł`/`ó` never matches in
     // JS). So the parser answers this with July's window, and the strip has to agree -- an ugly
-    // result is the correct one here, and a `` guard that "fixed" it would break the phrases
+    // result is the correct one here, and a `\b` guard that "fixed" it would break the phrases
     // this module exists to recognize.
     expect(parsePolishDateRange("Nurofenów lipcu", now)).toEqual({
       start: "2026-07-01T00:00",
       end: "2026-08-01T00:00",
     });
     expect(stripPeriodPhrase("Nurofenów lipcu")).toBe("Nurofenó");
+  });
+
+  it("mutilates a word that merely contains a phrase, which is accepted behaviour here", () => {
+    // Pinned deliberately, as the cost of the bare-substring matching above rather than as desired
+    // output. `przedwczoraj` and `wczorajszy` contain `wczoraj`, so the parser has always read a
+    // window out of them -- that part predates the strip. What the strip adds is that the cut
+    // fragment now reaches the text query and the embedding, so the question the search arms see is
+    // corrupted and not merely diluted.
+    //
+    // Fixing it means matching on word edges, and `\b` cannot do it: it is ASCII-only, so it never
+    // fires after `ł`/`ą`/`ó`. A Unicode lookaround (`(?<!\p{L})…(?!\p{L})` with the `u` flag)
+    // would work -- and would also stop the parser recognizing `Nurofenów lipcu` as July, which the
+    // test above asserts it does. That is a change to what the date filter consumes, so it belongs
+    // to a change of its own, not to this one. Until then these two lines are the honest record.
+    expect(stripPeriodPhrase("Co jadł przedwczoraj?")).toBe("Co jadł przed?");
+    expect(stripPeriodPhrase("Co było wczorajszego wieczoru?")).toBe("Co było szego wieczoru?");
   });
 
   it("leaves a month name with no preposition alone, exactly as the parser ignores it", () => {

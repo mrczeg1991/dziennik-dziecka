@@ -211,8 +211,18 @@ export function stripPeriodPhrase(question: string): string {
   // lowercased copy: a case fold can change a string's length (`İ` folds to two code points),
   // which would shift every index after it and cut the wrong characters. Every entry of
   // PERIOD_PHRASES is letters and a space, so none of it is regex syntax needing an escape.
+  // Escaped before construction even though every current entry is letters and a single space: the
+  // list is a module constant today, so there is no injection surface, but a phrase added later
+  // with a `.` or a `(` in it would silently stop being a literal and start being a pattern.
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  // The punctuation tidy below is global on purpose -- it is cheaper than tracking the removal
+  // offset -- so it also closes a space before punctuation elsewhere in the question, and a phrase
+  // that opened the sentence leaves the separator that followed it (`"dzisiaj, co jadla?"` becomes
+  // `", co jadla?"`). Both are cosmetic for the text query and a mild perturbation of the
+  // embedding; neither justifies a surgical pass.
   return question
-    .replace(new RegExp(phrase, "i"), " ")
+    .replace(new RegExp(escaped, "i"), " ")
     .replace(/\s+/g, " ")
     .replace(/ ([?!.,;:])/g, "$1")
     .trim();
