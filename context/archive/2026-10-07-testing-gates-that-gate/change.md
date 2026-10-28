@@ -1,10 +1,10 @@
 ---
 change_id: testing-gates-that-gate
 title: Gates that actually gate
-status: implemented
+status: archived
 created: 2026-10-07
 updated: 2026-10-28
-archived_at: null
+archived_at: 2026-10-28T23:19:22Z
 ---
 
 ## Notes
