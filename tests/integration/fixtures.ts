@@ -206,6 +206,15 @@ export const SEARCH_IDS = {
   todayEarlyNote: `${FIXTURE_ID_PREFIX}00003000c301`,
   todayLateNote: `${FIXTURE_ID_PREFIX}00003000c302`,
   outsideTodayNote: `${FIXTURE_ID_PREFIX}00003000c303`,
+  // The completeness notes get a child of their own for the same reason the threshold and
+  // window-only notes do -- and here the reason is not merely isolation but arithmetic: the four
+  // notes below are asserted as a complete set, and so are `child`'s six and `thresholdChild`'s
+  // two, so none of those children had room for a fifth note.
+  completenessChild: `${FIXTURE_ID_PREFIX}0000300000c4`,
+  inWindowAboveFloorNote: `${FIXTURE_ID_PREFIX}00003000c401`,
+  inWindowFullTextOnlyNote: `${FIXTURE_ID_PREFIX}00003000c402`,
+  inWindowBelowFloorNote: `${FIXTURE_ID_PREFIX}00003000c403`,
+  outsideWindowAboveFloorNote: `${FIXTURE_ID_PREFIX}00003000c404`,
 };
 
 /**
@@ -251,7 +260,12 @@ export const SEARCH_ABOVE_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR + SEARCH_FL
 export const SEARCH_BELOW_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR - SEARCH_FLOOR_MARGIN;
 
 /**
- * One account, two children, eight notes -- for `tests/integration/notes-search.test.ts`.
+ * One account, four children, fifteen notes -- shared by every search suite in this directory
+ * (`notes-search.test.ts`, `notes-search-window.test.ts`, `notes-search-completeness.test.ts`).
+ * One child per assertion group, because every group asserts a complete set: `search_notes` is
+ * always scoped by `p_child_id`, so a note seeded on one child cannot change another group's
+ * outcome. That is also why `npm run test:int` runs `--no-file-parallelism` -- the suites share
+ * this fixture, so they seed and tear it down one file at a time.
  *
  * On `child`, six notes about dates and text. `nearNote` sits mid-window and carries the one-hot
  * embedding, serving double duty as both the no-date-range semantic match and the date-window's
@@ -266,6 +280,22 @@ export const SEARCH_BELOW_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR - SEARCH_FL
  * a seventh and eighth note on `child` would break it. Their content is chosen to share no word
  * with the query text that reads them, so the full-text arm cannot smuggle the below-floor note
  * back in and the floor is the only thing deciding.
+ *
+ * On `windowChild`, three notes seeded against today's Warsaw date (see `TODAY_WALL_CLOCK_DATE`)
+ * and one well outside it, for the path a question that is nothing but a period phrase takes --
+ * answered from the window alone, never through `search_notes`. None carries an embedding, on
+ * purpose: that path embeds nothing, so a regression that started calling the endpoint for a
+ * question with no words left in it would surface rather than hide.
+ *
+ * On `completenessChild`, four notes forming a 2x2 over the date branch's two conjuncts -- the
+ * window predicate AND the relevance gate. In the March 2026 window and clearing a gate arm:
+ * `inWindowAboveFloorNote` (vector, at `SEARCH_ABOVE_FLOOR_SIMILARITY`) and
+ * `inWindowFullTextOnlyNote` (full text, no embedding at all) -- both returned. Failing exactly
+ * one conjunct each: `inWindowBelowFloorNote` (in the window, at
+ * `SEARCH_BELOW_FLOOR_SIMILARITY`, and sharing no word with the query text so the full-text arm
+ * cannot carry it back in) and `outsideWindowAboveFloorNote` (above the floor, but in April).
+ * Each of the two omissions therefore has a single distinct cause, so dropping the gate from the
+ * date branch and dropping the window produce different failures rather than the same set diff.
  */
 export const SEARCH_FIXTURE: Fixture = {
   email: "search.fixture@example.com",
@@ -275,6 +305,7 @@ export const SEARCH_FIXTURE: Fixture = {
     { id: SEARCH_IDS.child, name: "Search fixture child" },
     { id: SEARCH_IDS.thresholdChild, name: "Search threshold fixture child" },
     { id: SEARCH_IDS.windowChild, name: "Search window-only fixture child" },
+    { id: SEARCH_IDS.completenessChild, name: "Search completeness fixture child" },
   ],
   notes: [
     {
@@ -352,6 +383,48 @@ export const SEARCH_FIXTURE: Fixture = {
       childId: SEARCH_IDS.windowChild,
       occurredAt: "2026-01-02T12:00",
       content: "notatka poza okienkiem dzisiejszym OKNOXYZC",
+    },
+    // The completeness 2x2. March 2026 is clear of every other date in this fixture, so the window
+    // the completeness suite passes (2026-03-01 .. 2026-04-01) cannot pick up a note seeded for
+    // another assertion even if a future change moved one of these notes onto a shared child.
+    // KOMPLXYZB is the query text, and deliberately the ONLY sentinel here -- a departure from the
+    // one-marker-per-note convention the notes above follow (KASZELXYZ, PROGXYZA, OKNOXYZA). A
+    // marker earns its place on the note a text query has to hit: there it makes the match unique
+    // by construction, immune to a realistic word someone adds to a sibling note later. On the
+    // other three no query ever reads the content, so a marker would buy nothing and cost the one
+    // thing these contents are for -- reading like notes a parent actually wrote. Nothing in
+    // `inWindowBelowFloorNote`'s text can match the query, so the floor alone keeps it out.
+    //
+    // The prose is ordinary parent-diary text and carries no weight in the predicate. The vectors
+    // here are synthetic, so what puts a note above or below the floor is the `gradedVector` call
+    // beside it, never what the words mean -- read a note's id and its embedding for its role, not
+    // its content. "zjadl caly obiad" sits below the floor because the fixture says so.
+    {
+      id: SEARCH_IDS.inWindowAboveFloorNote,
+      childId: SEARCH_IDS.completenessChild,
+      occurredAt: "2026-03-10T09:00",
+      content: "katar od trzech dni, spal niespokojnie",
+      embedding: gradedVector(SEARCH_ABOVE_FLOOR_SIMILARITY),
+    },
+    {
+      id: SEARCH_IDS.inWindowFullTextOnlyNote,
+      childId: SEARCH_IDS.completenessChild,
+      occurredAt: "2026-03-12T10:00",
+      content: "goraczka 38 stopni wieczorem, podalam syrop KOMPLXYZB",
+    },
+    {
+      id: SEARCH_IDS.inWindowBelowFloorNote,
+      childId: SEARCH_IDS.completenessChild,
+      occurredAt: "2026-03-14T11:00",
+      content: "zjadl caly obiad i poprosil o dokladke",
+      embedding: gradedVector(SEARCH_BELOW_FLOOR_SIMILARITY),
+    },
+    {
+      id: SEARCH_IDS.outsideWindowAboveFloorNote,
+      childId: SEARCH_IDS.completenessChild,
+      occurredAt: "2026-04-05T12:00",
+      content: "wizyta u pediatry, szczepienie bez odczynu",
+      embedding: gradedVector(SEARCH_ABOVE_FLOOR_SIMILARITY),
     },
   ],
 };
