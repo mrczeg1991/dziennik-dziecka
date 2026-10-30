@@ -435,31 +435,31 @@ edits a scratch copy only and restores it.
 
 #### Automated
 
-- [x] 1.1 Integration tests pass: `npm run test:int`
-- [x] 1.2 The new suite fails when the gate is removed, then passes again once restored
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Type checking passes: `npx astro check` reports 0 errors
-- [x] 1.5 Scope gate passes with a re-derived count: `npm run gate:scope`
+- [x] 1.1 Integration tests pass: `npm run test:int` — 9733183
+- [x] 1.2 The new suite fails when the gate is removed, then passes again once restored — 9733183
+- [x] 1.3 Linting passes: `npm run lint` — 9733183
+- [x] 1.4 Type checking passes: `npx astro check` reports 0 errors — 9733183
+- [x] 1.5 Scope gate passes with a re-derived count: `npm run gate:scope` — 9733183
 
 #### Manual
 
-- [x] 1.6 The four notes' contents read as plausible Polish parent notes
-- [x] 1.7 The below-floor note's content shares no word with the query text
+- [x] 1.6 The four notes' contents read as plausible Polish parent notes — 9733183
+- [x] 1.7 The below-floor note's content shares no word with the query text — 9733183
 
 ### Phase 2: End-to-end path test through `searchNotes`
 
 #### Automated
 
-- [ ] 2.1 Integration tests pass: `npm run test:int`
-- [ ] 2.2 The suite passes identically with and without `OPENAI_API_KEY`, with no billed call
-- [ ] 2.3 The test is a stripping regression guard: it goes red when `stripPeriodPhrase` is neutered, then passes once restored
-- [ ] 2.4 Linting passes: `npm run lint`
-- [ ] 2.5 Type checking passes: `npx astro check` reports 0 errors
-- [ ] 2.6 Scope gate passes: `npm run gate:scope`
+- [x] 2.1 Integration tests pass: `npm run test:int`
+- [x] 2.2 The suite passes identically with and without `OPENAI_API_KEY`, with no billed call
+- [x] 2.3 The test is a stripping regression guard: it goes red when `stripPeriodPhrase` is neutered, then passes once restored
+- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.5 Type checking passes: `npx astro check` reports 0 errors
+- [x] 2.6 Scope gate passes: `npm run gate:scope`
 
 #### Manual
 
-- [ ] 2.7 The Warsaw-midnight straddle is understood as the one uncovered case
+- [x] 2.7 The Warsaw-midnight straddle is understood as the one uncovered case
 
 ### Phase 3: Cookbook update and rollout close
 

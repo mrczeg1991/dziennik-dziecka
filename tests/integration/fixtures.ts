@@ -215,6 +215,14 @@ export const SEARCH_IDS = {
   inWindowFullTextOnlyNote: `${FIXTURE_ID_PREFIX}00003000c402`,
   inWindowBelowFloorNote: `${FIXTURE_ID_PREFIX}00003000c403`,
   outsideWindowAboveFloorNote: `${FIXTURE_ID_PREFIX}00003000c404`,
+  // The end-to-end notes get a child of their own for a reason of the same kind: `windowChild`'s
+  // three notes are asserted as a complete set by notes-search-window.test.ts:38-69, so there was
+  // no room for a fourth there either. Dated today rather than March 2026, because this path runs
+  // through `searchNotes`, whose window is parsed from `dzisiaj` against the clock at call time
+  // (see `TODAY_WALL_CLOCK_DATE`).
+  completenessE2eChild: `${FIXTURE_ID_PREFIX}0000300000c5`,
+  e2eTodayMatchingNote: `${FIXTURE_ID_PREFIX}00003000c501`,
+  e2eTodayUnrelatedNote: `${FIXTURE_ID_PREFIX}00003000c502`,
 };
 
 /**
@@ -260,7 +268,7 @@ export const SEARCH_ABOVE_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR + SEARCH_FL
 export const SEARCH_BELOW_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR - SEARCH_FLOOR_MARGIN;
 
 /**
- * One account, four children, fifteen notes -- shared by every search suite in this directory
+ * One account, five children, seventeen notes -- shared by every search suite in this directory
  * (`notes-search.test.ts`, `notes-search-window.test.ts`, `notes-search-completeness.test.ts`).
  * One child per assertion group, because every group asserts a complete set: `search_notes` is
  * always scoped by `p_child_id`, so a note seeded on one child cannot change another group's
@@ -296,6 +304,15 @@ export const SEARCH_BELOW_FLOOR_SIMILARITY = SEARCH_SIMILARITY_FLOOR - SEARCH_FL
  * cannot carry it back in) and `outsideWindowAboveFloorNote` (above the floor, but in April).
  * Each of the two omissions therefore has a single distinct cause, so dropping the gate from the
  * date branch and dropping the window produce different failures rather than the same set diff.
+ *
+ * On `completenessE2eChild`, two notes dated today in Warsaw -- one carrying the word the
+ * end-to-end question searches for and one not -- for that same completeness property read through
+ * `searchNotes` rather than through the RPC. Today and not March, because that path parses its own
+ * window out of `dzisiaj` at call time. Neither note carries an embedding, and that is load-bearing
+ * rather than incidental: `tests/stubs/astro-env-server.ts` re-exports `OPENAI_API_KEY` from
+ * `process.env`, so `embedText` performs a real call wherever that key is exported. With no vector
+ * stored, the gate's vector arm cannot contribute for either note, and the returned set is the same
+ * with a key as without one.
  */
 export const SEARCH_FIXTURE: Fixture = {
   email: "search.fixture@example.com",
@@ -306,6 +323,7 @@ export const SEARCH_FIXTURE: Fixture = {
     { id: SEARCH_IDS.thresholdChild, name: "Search threshold fixture child" },
     { id: SEARCH_IDS.windowChild, name: "Search window-only fixture child" },
     { id: SEARCH_IDS.completenessChild, name: "Search completeness fixture child" },
+    { id: SEARCH_IDS.completenessE2eChild, name: "Search completeness end-to-end fixture child" },
   ],
   notes: [
     {
@@ -425,6 +443,28 @@ export const SEARCH_FIXTURE: Fixture = {
       occurredAt: "2026-04-05T12:00",
       content: "wizyta u pediatry, szczepienie bez odczynu",
       embedding: gradedVector(SEARCH_ABOVE_FLOOR_SIMILARITY),
+    },
+    // The end-to-end pair. Today's Warsaw date (see `TODAY_WALL_CLOCK_DATE`) rather than March
+    // 2026, because the window this pair is read through is parsed from `dzisiaj` at call time;
+    // both times sit around midday so neither lands near a day boundary. `goraczka` appears in the
+    // first note and in no other note on this child, so the stripped question has exactly one row
+    // it can match -- and `notes.fts` is built over `immutable_unaccent` on both sides, so the
+    // unaccented content here matches the accented `gorączka` a parent types. Neither content
+    // mentions `dzisiaj`: the phrase has to be gone before the text reaches the search arms, which
+    // is what also makes that assertion a stripping regression guard. No `embedding` on either, so
+    // the gate's vector arm is off for both and the result does not move when OPENAI_API_KEY
+    // happens to be exported.
+    {
+      id: SEARCH_IDS.e2eTodayMatchingNote,
+      childId: SEARCH_IDS.completenessE2eChild,
+      occurredAt: `${TODAY_WALL_CLOCK_DATE}T11:00`,
+      content: "goraczka od rana, mierzylam trzy razy",
+    },
+    {
+      id: SEARCH_IDS.e2eTodayUnrelatedNote,
+      childId: SEARCH_IDS.completenessE2eChild,
+      occurredAt: `${TODAY_WALL_CLOCK_DATE}T13:00`,
+      content: "dlugi spacer po obiedzie, wrocil w dobrym nastroju",
     },
   ],
 };

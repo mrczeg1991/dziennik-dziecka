@@ -23,16 +23,26 @@
 // 0.430 -> 0.438 gap and one of the two floor notes flips. A failure here names the regression
 // rather than printing a set diff.
 //
-// Same constraints as `notes-search.test.ts`, for the same reasons: `.rpc()` rather than
-// `@/lib/search` (see `context/foundation/test-plan.md` §6.7 -- `src/lib/embeddings.ts` imports
-// `astro:env/server`, which does not resolve under plain Vitest), and no real OpenAI call ever.
-// The vectors are synthetic and built by `tests/support/graded-vector.ts`, whose own math is pinned
-// in `tests/unit/`.
+// This file uses both entry points, each where it is the right one for its subject. The
+// gate-inside-the-window assertion calls `.rpc()` directly, as `notes-search.test.ts` does: its
+// subject is one `and ( ... )` block inside `search_notes`, and reaching it through `searchNotes`
+// would mean smuggling four synthetic vectors and an explicit window past a date parser and an
+// embedding call that have nothing to do with that predicate. The end-to-end assertion below calls
+// `searchNotes` from `@/lib/search`, as `notes-search-window.test.ts` does: its subject is the
+// whole path a parent's question takes -- the period phrase turned into a window and removed from
+// the text the search arms see -- and that path exists only above the RPC. The import resolves for
+// the same reason it does there: `vitest.config.ts` aliases `astro:env/server` to a stub. §6.7 of
+// `context/foundation/test-plan.md` records why that alias had to exist at all.
+//
+// No real OpenAI call on either path. The `.rpc()` assertion passes synthetic vectors built by
+// `tests/support/graded-vector.ts`, whose own math is pinned in `tests/unit/`, and the end-to-end
+// notes carry no `embedding` at all, so nothing there depends on whether a key is exported.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { SupabaseServerClient } from "@/lib/children";
 import type { Note } from "@/lib/notes";
+import { searchNotes } from "@/lib/search";
 
 import { GRADED_QUERY_VECTOR } from "../support/graded-vector";
 import { SEARCH_FIXTURE, SEARCH_IDS, seedFixture, signInAsFixtureUser, teardownFixture } from "./fixtures";
@@ -47,6 +57,16 @@ const WINDOW_END = "2026-04-01T00:00:00";
 // it makes the full-text arm the only thing that can match that note, and makes "shares no word
 // with the query" a property anyone can check by reading the three other contents.
 const QUERY_TEXT = "KOMPLXYZB";
+
+// The end-to-end question, carrying a period phrase and a search word at once -- and that pairing
+// is load-bearing twice over. `dzisiaj` becomes the window; `gorączka` is what is left for the
+// text query. `websearch_to_tsquery('simple', ...)` ANDs the tokens it is handed, so if
+// `stripPeriodPhrase` ever stopped removing the phrase the query would become
+// `'goraczka' & 'dzisiaj'`, no seeded note carries the second token, and this assertion goes red:
+// it is a stripping regression guard as much as a window one. Accented as a parent would type it,
+// against unaccented fixture content -- `notes.fts` is built over `immutable_unaccent` and the
+// query side applies it too.
+const E2E_QUESTION = "gorączka dzisiaj";
 
 let authenticated: SupabaseServerClient;
 
@@ -122,5 +142,24 @@ describe("search_notes relevance gate inside a date window", () => {
     expect(returnedIds).not.toContain(SEARCH_IDS.inWindowBelowFloorNote);
     // Clears the gate at 0.454 exactly as the first note does; April is the only difference.
     expect(returnedIds).not.toContain(SEARCH_IDS.outsideWindowAboveFloorNote);
+  });
+});
+
+describe("searchNotes on a question carrying both a period phrase and a search word", () => {
+  it("reaches the database with the window applied and the phrase stripped", async () => {
+    const result = await searchNotes(authenticated, SEARCH_IDS.completenessE2eChild, E2E_QUESTION);
+
+    // Ids derived from the fixture, never from a second run of the query, and never a count. The
+    // unrelated note sits in the same window on the same child and carries no embedding either, so
+    // the one thing keeping it out is the word that survived the strip.
+    expect(result.results.map((note) => note.id)).toStrictEqual([SEARCH_IDS.e2eTodayMatchingNote]);
+    // The window was parsed rather than the question falling through to ranked search -- the
+    // difference between this assertion exercising the date branch and it exercising the RRF one.
+    expect(result.dateRange).not.toBeNull();
+
+    // `degraded` is deliberately not asserted: it is `true` with no OPENAI_API_KEY exported and
+    // `false` with one, while the ids above are identical either way. Asserting it would put back
+    // exactly the environment dependence the no-embedding fixture removes, and degraded mode has
+    // its own coverage at notes-search.test.ts:133-171.
   });
 });
