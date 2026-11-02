@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-10-15
+> Last updated: 2026-11-02
 
 ## 1. Strategy
 
@@ -81,7 +81,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 1   | Isolation at the enforcing layer                     | Prove the database policies — not the handlers — are what keeps one account's notes from everyone else, and that no `delete` policy exists, so a delete affects no rows                                                                                                                                                                                          | #1, #4                                                                      | database policy tests                              | complete     | `context/changes/testing-isolation-boundary/` |
 | 2   | Gates that actually gate                             | Make CI fail for the three reasons it currently cannot: hosted schema drifting from deployed code, a gate run that aborted rather than passed, and a data-touching route never added to the guard list                                                                                                                                                           | #2, #3, #6, #7                                                              | gates, route-coverage test, build-output assertion | complete     | `context/changes/testing-gates-that-gate/`     |
 | 3   | A runner, and the boundaries nothing can reach today | Stand up a test runner and the wall-clock boundary conversion a period question will depend on, then cover the three read boundaries that live in the query layer rather than in a database policy: a parent's own soft-deleted note stays out of their list, one child's notes stay out of the other child's, and an edit writes no column but the note's text | #5 (conversion half), #4 (column half), #1 (soft-delete and cross-child halves) | unit + integration                                 | complete     | `context/changes/testing-runner-and-read-boundaries/` |
-| 4   | Search answer completeness                           | Prove a "how often" or "in July" answer is complete within its range once ranking exists                                                                                                                                                                                                                                                                         | #5 (ranking half)                                                           | integration                                        | not started  | —                                             |
+| 4   | Search answer completeness                           | Prove a "how often" or "in July" answer is complete within its range once ranking exists                                                                                                                                                                                                                                                                         | #5 (ranking half)                                                           | integration                                        | complete     | `context/changes/testing-search-completeness/` |
 
 **Order rationale.** Phase 1 goes first because it covers the top-stated
 fear, a PRD guardrail, and the layer that currently has no coverage at all —
@@ -861,40 +861,114 @@ same seat asymmetry Phase 2 documented, met by a different kind of test. It chan
 if branch protection becomes available or a database becomes reachable from the
 build command — not before.
 
+**§3 Phase 4 — "completeness" on the date branch is two properties wearing one
+word, and only one of them holds.** The row promised that a period-bounded
+question returns every note whose event time falls inside the window. _No
+truncation_ is guaranteed by construction: `date_range_candidates` has no
+`LIMIT` and `p_match_count` never reaches it, so the "a ranking returns a
+plausible subset" failure the row names is structurally impossible on this
+branch. _No filtering_ is not guaranteed at all. The window predicate is
+**ANDed** with a relevance gate — a full-text match OR an above-floor vector —
+at `…20261027140907_recalibrate_search_notes_similarity_floor.sql:147-157`, so
+an in-window note clearing neither arm is dropped without a trace.
+Completeness there means complete _among relevance-passing notes_. **That is
+why a "how often … w lipcu" answer can hold fewer notes than the month does.**
+
+**The same migration asserts the opposite contract, and the decision was to pin
+the code rather than to make the comment true.** Line 43 of that file justifies
+the floor's value with "the date-bound branch's contract is completeness" — a
+sentence the SQL 100 lines below does not implement unconditionally. Two true
+positives sit knowingly below the floor (`:53-57`, at 0.402 and 0.347), and the
+failure is not hypothetical: it already shipped once, recorded in
+`context/archive/2026-10-23-note-search-precision/frame.md` §Root Cause.
+Bypassing the gate when a window is present would be a migration, and would
+re-open the noise tradeoff the 2026-10-24 slice measured and settled — so this
+phase pinned current behaviour and wrote the disagreement down, rather than
+asserting that every in-window note comes back. That assertion is red today by
+design. **A documented contract the code does not keep is worth a test that
+says which of the two is real.**
+
+**The existing date test had deliberately neutralized the very gate needed to
+see this, and that was the right call for it.**
+`tests/integration/notes-search.test.ts`'s window-edge assertion gives every
+in-window note the identical one-hot vector, so cosine similarity is `1.0` for
+all of them and the floor can never decide — its own comment says exactly that.
+Correct for an edge test, blind to the gate, and the reason the gap outlived
+three slices while every suite stayed green. The fix needed no new tool: the
+graded-vector technique already existed for the floor assertion on the RRF
+branch and had simply never been pointed at a windowed query. **When two
+predicates are ANDed, a test holding one constant cannot observe the other —
+so count the conjuncts and check that each has an assertion able to fail on it
+alone.** §6.7 now splits the one-hot and graded-vector advice on that line.
+
 ### 6.7 Testing an AI-dependent query without mocking the AI call
 
 Delivered by §3 Phase 5 (`context/changes/note-search-by-meaning/`), which
 closes out the rollout this guide opened.
 
 **Id-space `3` is now taken.** `tests/integration/fixtures.ts`'s
-`SEARCH_FIXTURE` (`SEARCH_IDS`, prefix `…-0000`**`3`**`…`) backs
-`tests/integration/notes-search.test.ts`. §6.3's "Starting a third suite"
-example is this fixture, verbatim — a fourth suite claims digit `4`.
+`SEARCH_FIXTURE` (`SEARCH_IDS`, prefix `…-0000`**`3`**`…`) backs three suites —
+`tests/integration/notes-search.test.ts`, `notes-search-window.test.ts` and
+`notes-search-completeness.test.ts` — with one child per assertion group rather
+than one fixture per suite, because `search_notes` is always scoped by
+`p_child_id` and `test:int` runs `--no-file-parallelism`. §6.3's "Starting a
+third suite" example is this fixture, verbatim. A suite needing its own
+*fixture* claims digit `4`; a suite reusing this one adds a child instead.
 
 **The pattern, for the next AI-dependent test.** This codebase has no
 `vi.mock` anywhere (§6.6 already noted this for secrets; it holds for AI
 calls too), so a suite that needs `search_notes` to rank by vector similarity
-cannot fake `embedText`. Instead it seeds a precomputed, synthetic embedding
-— a one-hot vector, never a real OpenAI response — directly into
-`notes.embedding`, and calls the SQL function under test,
-`public.search_notes(...)`, through `.rpc()` rather than through the
-TypeScript orchestration wrapper (`src/lib/search.ts`) that would otherwise
-need a live AI client. Cosine similarity of a vector with itself is `1.0`,
-which trivially clears `search_notes`'s similarity threshold regardless of
-how that default is later tuned — so the test controls inclusion by the
-parameter under test (a date window, in this suite's case), not by hoping a
-real embedding happens to rank the right way. The next person adding an
-AI-dependent test, once §3 Phase 4 of this guide's own rollout opens, should
-follow this same shape: seed the synthetic vector, call the SQL function
-directly, never mock the client.
+cannot fake `embedText`. Instead it seeds a precomputed, synthetic embedding —
+never a real OpenAI response — directly into `notes.embedding`, and calls the
+SQL function under test, `public.search_notes(...)`, through `.rpc()` rather
+than through the TypeScript orchestration wrapper (`src/lib/search.ts`). Seed
+the synthetic vector, call the SQL function directly, never mock the client.
 
-**Why `src/lib/search.ts` could not be imported directly here.** It calls
-`embedText` (`src/lib/embeddings.ts`), which imports `OPENAI_API_KEY` from
-`"astro:env/server"` — a virtual module that does not resolve under plain
-Vitest. `vitest.config.ts`'s own top comment says "Nothing under `tests/`
-imports `astro:env/server`"; that line is made slightly stale by this
-addition; it remains literally true only because this suite deliberately
-avoided doing so, calling `search_notes` through `.rpc()` instead.
+**Which synthetic vector depends on what the test is isolating, and getting
+this backwards makes a test that proves nothing.** Two choices, not
+interchangeable:
+
+- **A one-hot vector** (`SEARCH_ONE_HOT_EMBEDDING`, `tests/integration/fixtures.ts`),
+  reused as both the seeded `embedding` and the `p_query_embedding` argument.
+  Cosine similarity of a vector with itself is `1.0`, which clears
+  `search_notes`'s similarity threshold regardless of how that default is later
+  tuned. Use it when the vector must be **neutral**, so that some other
+  parameter is what decides inclusion — a date window, say. Reference:
+  `tests/integration/notes-search.test.ts`'s date-boundary assertion, whose own
+  comment says "only the date filter — never an accidental threshold miss —
+  decides inclusion".
+- **A graded vector** (`gradedVector(s)`, `tests/support/graded-vector.ts`),
+  a unit vector at exactly cosine similarity `s` to `GRADED_QUERY_VECTOR`,
+  accurate to ~1e-7 in `float4`. Use it when the **threshold itself is the
+  subject** — precisely where a one-hot vector is disqualifying, because at
+  similarity `1.0` the floor can never decide and a test built on it cannot
+  observe the floor at all. References:
+  `tests/integration/notes-search.test.ts`'s floor assertion (RRF branch) and
+  `tests/integration/notes-search-completeness.test.ts` (date branch).
+
+**The §3 Phase 4 exception: one test does import `@/lib/search`.** The
+end-to-end assertion in `tests/integration/notes-search-completeness.test.ts`
+calls `searchNotes` rather than `.rpc()`, because its subject is the path
+*above* the RPC — a period phrase becoming a window and being stripped from the
+text the search arms see — and that path does not exist inside the SQL
+function. The import resolves because `vitest.config.ts` aliases
+`astro:env/server` to `tests/stubs/astro-env-server.ts`;
+`tests/integration/notes-search-window.test.ts` relies on the same alias.
+
+What makes that safe without an API key is the **fixture, not the alias**. The
+stub re-exports `OPENAI_API_KEY` from `process.env`, so `embedText` performs a
+real, billed call on any machine where that key is exported — Vitest does not
+load `.env` into `process.env`, so it is normally absent, but it is one
+`export` away. Both notes behind that assertion are therefore seeded with **no
+`embedding` at all**, which makes `n.embedding is not null` false per row in
+the relevance gate and switches the vector arm off whatever the query vector
+turned out to be. Measured both ways: with a key exported the call succeeds
+(`degraded === false`) and a live 1536-dimension vector reaches
+`p_query_embedding`, yet the returned ids are identical to the keyless run.
+For the same reason, **never assert `degraded` in such a test** — it is `true`
+without a key and `false` with one while the ids do not move, and CI exports no
+key (`.github/workflows/ci.yml`), so asserting it would pass locally and fail
+there.
 
 ## 7. What We Deliberately Don't Test
 

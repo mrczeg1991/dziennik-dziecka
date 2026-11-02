@@ -450,27 +450,27 @@ edits a scratch copy only and restores it.
 
 #### Automated
 
-- [x] 2.1 Integration tests pass: `npm run test:int`
-- [x] 2.2 The suite passes identically with and without `OPENAI_API_KEY`, with no billed call
-- [x] 2.3 The test is a stripping regression guard: it goes red when `stripPeriodPhrase` is neutered, then passes once restored
-- [x] 2.4 Linting passes: `npm run lint`
-- [x] 2.5 Type checking passes: `npx astro check` reports 0 errors
-- [x] 2.6 Scope gate passes: `npm run gate:scope`
+- [x] 2.1 Integration tests pass: `npm run test:int` — 8851fbf
+- [x] 2.2 The suite passes identically with and without `OPENAI_API_KEY`, with no billed call — 8851fbf
+- [x] 2.3 The test is a stripping regression guard: it goes red when `stripPeriodPhrase` is neutered, then passes once restored — 8851fbf
+- [x] 2.4 Linting passes: `npm run lint` — 8851fbf
+- [x] 2.5 Type checking passes: `npx astro check` reports 0 errors — 8851fbf
+- [x] 2.6 Scope gate passes: `npm run gate:scope` — 8851fbf
 
 #### Manual
 
-- [x] 2.7 The Warsaw-midnight straddle is understood as the one uncovered case
+- [x] 2.7 The Warsaw-midnight straddle is understood as the one uncovered case — 8851fbf
 
 ### Phase 3: Cookbook update and rollout close
 
 #### Automated
 
-- [ ] 3.1 Full test suite passes: `npm test`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 All pre-build gates pass: `npm run gates:pre`
+- [x] 3.1 Full test suite passes: `npm test`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 All pre-build gates pass: `npm run gates:pre`
 
 #### Manual
 
-- [ ] 3.4 §6.7 read end-to-end does not contradict itself
-- [ ] 3.5 A fresh reader can tell from §6.6 why a period question may return fewer notes than the window holds
-- [ ] 3.6 §3 row 4 reads `complete` and every other row is unchanged
+- [x] 3.4 §6.7 read end-to-end does not contradict itself
+- [x] 3.5 A fresh reader can tell from §6.6 why a period question may return fewer notes than the window holds
+- [x] 3.6 §3 row 4 reads `complete` and every other row is unchanged
