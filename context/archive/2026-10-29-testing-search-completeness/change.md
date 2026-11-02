@@ -1,10 +1,10 @@
 ---
 change_id: testing-search-completeness
 title: Search answer completeness — test-plan rollout Phase 4
-status: implemented
+status: archived
 created: 2026-10-29
 updated: 2026-11-02
-archived_at: null
+archived_at: 2026-11-02T19:55:55Z
 ---
 
 ## Notes
