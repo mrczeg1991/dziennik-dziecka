@@ -465,12 +465,12 @@ edits a scratch copy only and restores it.
 
 #### Automated
 
-- [x] 3.1 Full test suite passes: `npm test`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 All pre-build gates pass: `npm run gates:pre`
+- [x] 3.1 Full test suite passes: `npm test` — 0089992
+- [x] 3.2 Linting passes: `npm run lint` — 0089992
+- [x] 3.3 All pre-build gates pass: `npm run gates:pre` — 0089992
 
 #### Manual
 
-- [x] 3.4 §6.7 read end-to-end does not contradict itself
-- [x] 3.5 A fresh reader can tell from §6.6 why a period question may return fewer notes than the window holds
-- [x] 3.6 §3 row 4 reads `complete` and every other row is unchanged
+- [x] 3.4 §6.7 read end-to-end does not contradict itself — 0089992
+- [x] 3.5 A fresh reader can tell from §6.6 why a period question may return fewer notes than the window holds — 0089992
+- [x] 3.6 §3 row 4 reads `complete` and every other row is unchanged — 0089992
